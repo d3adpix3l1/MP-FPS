@@ -57,7 +57,10 @@ void UCombatComponent::Initiate_Aim_Released()
 void UCombatComponent::SpawnInventory()
 {
 	AWeapon* NewWeapon = SpawnWeapon(DefaultWeaponClass);
-	
+	if (IsValid(NewWeapon))
+	{
+		NewWeapon->AttachToOwningPawn();
+	}
 }
 
 void UCombatComponent::DestroyInventory()
