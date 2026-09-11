@@ -1,0 +1,26 @@
+# --- Unreal Engine Defaults ---
+Binaries/
+Builds/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Build files
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.vsconfig
+
+# --- JetBrains Rider Specific ---
+.idea/
+*.sln.DotSettings
+*.sln.DotSettings.user
+*.csproj
+*.iml
+contentModel.xml
+
+# RiderLink Plugin (Recommended to ignore if bundled locally)
+Plugins/Developer/RiderLink/
