@@ -31,9 +31,10 @@ public:
 	virtual USkeletalMeshComponent* GetMesh3P_Implementation() const override;
 	/** ~PlayerInterface~ */
 
-protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void BeginDestroy() override;
+protected:
+	
 	
 private:
 	
