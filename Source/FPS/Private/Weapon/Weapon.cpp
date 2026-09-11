@@ -4,6 +4,7 @@
 #include "Weapon/Weapon.h"
 
 #include "Components/SkeletalMeshComponent.h"
+#include "GameFramework/Pawn.h"
 #include "Interfaces/PlayerInterface.h"
 
 AWeapon::AWeapon()
