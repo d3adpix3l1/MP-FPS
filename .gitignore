@@ -24,3 +24,6 @@ contentModel.xml
 
 # RiderLink Plugin (Recommended to ignore if bundled locally)
 Plugins/Developer/RiderLink/
+
+#Files Above 100MB
+Content/Effects/Textures/Flipbooks/SmokeSwirl_3_Flipbook_CHANNELPACK.uasset
