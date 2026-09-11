@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Data/WeaponData.h"
 #include "CombatComponent.generated.h"
 
 
@@ -23,6 +24,9 @@ public:
 	void Initiate_ReloadWeapon();
 	void Initiate_Aim_Pressed();
 	void Initiate_Aim_Released();
+	
+	UPROPERTY(EditDefaultsOnly, Category = "FPS|Weapon")
+	TObjectPtr<UWeaponData> WeaponData;
 	
 protected:
 

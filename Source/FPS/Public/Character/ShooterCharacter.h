@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Combat/CombatComponent.h"
 #include "GameFramework/Character.h"
+#include "Interfaces/PlayerInterface.h"
 #include "ShooterCharacter.generated.h"
 
 class UInputAction;
@@ -12,24 +13,24 @@ class UCameraComponent;
 class USpringArmComponent;
 
 UCLASS()
-class FPS_API AShooterCharacter : public ACharacter
+class FPS_API AShooterCharacter : public ACharacter, public IPlayerInterface
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this character's properties
 	AShooterCharacter();
+	
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
+	/** PlayerInterface */
+	virtual FName GetWeaponAttachPoint_Implementation(const FGameplayTag& WeaponType) const override;
+	/** ~PlayerInterface~ */
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
 private:
 	
