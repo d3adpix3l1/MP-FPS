@@ -21,8 +21,11 @@ public:
 	
 	void AttachToOwningPawn() const;
 	
-	UPROPERTY(EditAnywhere, Category = "FPS|WeaponType")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FPS|WeaponType")
 	FGameplayTag WeaponType;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Aiming")
+	float AimFieldOfView;
 
 protected:
 	virtual void BeginPlay() override;
@@ -37,5 +40,5 @@ private:
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<USkeletalMeshComponent> Mesh3P;
 	
-	void SetMeshVisibilities(APawn* OwningPawn) const;
+	void SetMeshVisibilities(const APawn* OwningPawn) const;
 };

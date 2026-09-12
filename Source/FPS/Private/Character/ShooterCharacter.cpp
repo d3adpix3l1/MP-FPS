@@ -8,6 +8,7 @@
 #include "Combat/CombatComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Weapon/Weapon.h"
 
 // Sets default values
 AShooterCharacter::AShooterCharacter()
@@ -43,6 +44,8 @@ AShooterCharacter::AShooterCharacter()
 	
 	Combat = CreateDefaultSubobject<UCombatComponent>("Combat");
 	Combat->SetIsReplicated(true);
+	
+	DefaultFieldOfView = 110.0f;
 }
 
 // Called when the game starts or when spawned
@@ -50,6 +53,7 @@ void AShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	FirstPersonCamera->SetFieldOfView(DefaultFieldOfView);
 }
 
 void AShooterCharacter::BeginDestroy()
@@ -62,11 +66,47 @@ void AShooterCharacter::BeginDestroy()
 	}
 }
 
+FRotator AShooterCharacter::GetFixedAimRotation() const
+{
+	FRotator AimRotation = GetBaseAimRotation();
+	if (AimRotation.Pitch > 90.f && !IsLocallyControlled())
+	{
+		//map pitch from [270, 360] to [-90, 0]
+		const FVector2D InRange(270.f, 360.f);
+		const FVector2D OutRange(-90.f, 0.f);
+		
+		AimRotation.Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AimRotation.Pitch);
+	}
+	
+	return AimRotation;
+}
+
 // Called every frame
 void AShooterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	CalculateFABRIKSocketTransform();
+	
+}
 
+void AShooterCharacter::CalculateFABRIKSocketTransform()
+{
+	if (IsValid(Combat) && IsValid(Combat->CurrentWeapon) && IsValid(Combat->CurrentWeapon->GetMesh3P()))
+	{
+		FABRIK_SocketTransform = Combat->CurrentWeapon->GetMesh3P()->GetSocketTransform("FABRIK_Socket", RTS_World);
+		
+		FVector OutLocation;
+		FRotator OutRotation;
+		GetMesh()->TransformToBoneSpace(
+			"hand_r", 
+			FABRIK_SocketTransform.GetLocation(), 
+			FABRIK_SocketTransform.GetRotation().Rotator(), 
+			OutLocation, 
+			OutRotation
+			);
+		FABRIK_SocketTransform.SetLocation(OutLocation);
+		FABRIK_SocketTransform.SetRotation(OutRotation.Quaternion());
+	}
 }
 
 // Called to bind functionality to input
@@ -131,10 +171,14 @@ void AShooterCharacter::Input_FireWeapon_Released()
 void AShooterCharacter::Input_Aim_Pressed()
 {
 	Combat->Initiate_Aim_Pressed();
+	OnAim(true);
 }
 
 void AShooterCharacter::Input_Aim_Released()
 {
 	Combat->Initiate_Aim_Released();
+	OnAim(false);
 }
+
+
 

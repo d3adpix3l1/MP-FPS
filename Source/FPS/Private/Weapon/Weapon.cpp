@@ -26,6 +26,8 @@ AWeapon::AWeapon()
 	Mesh3P->CastShadow = true;
 	Mesh3P->SetupAttachment(Mesh1P);
 	Mesh3P->SetHiddenInGame(true);
+	
+	AimFieldOfView = 65.0f;
 }
 
 void AWeapon::OnRep_Instigator()
@@ -66,7 +68,7 @@ void AWeapon::BeginPlay()
 	
 }
 
-void AWeapon::SetMeshVisibilities(APawn* OwningPawn) const
+void AWeapon::SetMeshVisibilities(const APawn* OwningPawn) const
 {
 	if (OwningPawn->IsLocallyControlled())
 	{
