@@ -101,6 +101,10 @@ void AWeapon::WeaponTrace(FHitResult& OutHit, float TraceLength)
 			ResponseParams
 		);
 		
+		if (!bHit)
+		{
+			OutHit.ImpactPoint = End;
+		}
 		/*DrawDebugSphereTraceSingle(
 			GetWorld(), 
 			Start, 

@@ -92,7 +92,7 @@ void UCombatComponent::Multicast_FireWeapon_Implementation(const FHitResult& Hit
 		//Get the 1st person mesh
 		USkeletalMeshComponent* Mesh3P = IPlayerInterface::Execute_GetMesh3P(GetOwner()); //Get the 1st person mesh
 		EPhysicalSurface ImpactSurfaceType = Hit.PhysMaterial.IsValid(false) ? Hit.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
-		CurrentWeapon->Local_Fire(Hit.ImpactPoint, Hit.ImpactNormal, ImpactSurfaceType, true);
+		CurrentWeapon->Local_Fire(Hit.ImpactPoint, Hit.ImpactNormal, ImpactSurfaceType, false);
 		if (IsValid(Montage3P) && IsValid(Mesh3P))
 		{
 			Mesh3P->GetAnimInstance()->Montage_Play(Montage3P);
