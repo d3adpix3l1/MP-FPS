@@ -4,8 +4,12 @@
 #include "Combat/CombatComponent.h"
 #include "Engine/Engine.h"
 #include "GameFramework/Pawn.h"
+#include "Interfaces/PlayerInterface.h"
 #include "Net/UnrealNetwork.h"
 #include "Weapon/Weapon.h"
+#include "Animation/AnimInstance.h"
+#include "Animation/AnimMontage.h"
+#include "Components/SkeletalMeshComponent.h"
 
 
 UCombatComponent::UCombatComponent()
@@ -43,13 +47,56 @@ void UCombatComponent::Initiate_CycleWeapon()
 
 void UCombatComponent::Initiate_FireWeapon_Pressed()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, TEXT("Initiate_FireWeapon_Pressed"), false);
+	Local_FireWeapon();
+	
 }
 
+void UCombatComponent::Local_FireWeapon()
+{
+	ensure(IsValid(WeaponData));
+	//get fire montage from WeaponData
+	UAnimMontage* Montage1P = WeaponData->FirstPersonMontages.FindChecked(CurrentWeapon->WeaponType).FireMontage;
+	//Get the 1st person mesh
+	USkeletalMeshComponent* Mesh1P = IPlayerInterface::Execute_GetMesh1P(GetOwner()); //Get the 1st person mesh
+	if (IsValid(Montage1P) && IsValid(Mesh1P))
+	{
+		Mesh1P->GetAnimInstance()->Montage_Play(Montage1P);
+	}
+	
+	Server_FireWeapon();
+}
+
+void UCombatComponent::Server_FireWeapon_Implementation()
+{
+	Multicast_FireWeapon();
+}
+
+void UCombatComponent::Multicast_FireWeapon_Implementation()
+{
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+	if (OwningPawn->IsLocallyControlled())
+	{
+		// do locally controlled stuff
+	}
+	else // do server controlled stuff
+	{
+		ensure(IsValid(WeaponData));
+		//get fire montage from WeaponData
+		UAnimMontage* Montage3P = WeaponData->ThirdPersonMontages.FindChecked(CurrentWeapon->WeaponType).FireMontage;
+		//Get the 1st person mesh
+		USkeletalMeshComponent* Mesh3P = IPlayerInterface::Execute_GetMesh3P(GetOwner()); //Get the 1st person mesh
+		if (IsValid(Montage3P) && IsValid(Mesh3P))
+		{
+			Mesh3P->GetAnimInstance()->Montage_Play(Montage3P);
+		}
+	}
+}
 void UCombatComponent::Initiate_FireWeapon_Released()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, TEXT("Initiate_FireWeapon_Released"), false);
 }
+
+
 
 void UCombatComponent::Initiate_ReloadWeapon()
 {
@@ -72,6 +119,8 @@ void UCombatComponent::Server_Aim_Implementation(bool bPressed)
 {
 	Local_Aim(bPressed);
 }
+
+
 
 void UCombatComponent::Local_Aim(bool bPressed)
 {
