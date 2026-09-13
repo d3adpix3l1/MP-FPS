@@ -75,9 +75,9 @@ void AWeapon::WeaponTrace(FHitResult& OutHit, float TraceLength)
 	FCollisionResponseParams ResponseParams;
 	ResponseParams.CollisionResponse.SetAllChannels(ECR_Ignore);
 	ResponseParams.CollisionResponse.SetResponse(ECC_Pawn, ECR_Block);
-	ResponseParams.CollisionResponse.SetResponse(ECC_WorldStatic, ECR_Ignore);
-	ResponseParams.CollisionResponse.SetResponse(ECC_WorldDynamic, ECR_Ignore);
-	ResponseParams.CollisionResponse.SetResponse(ECC_PhysicsBody, ECR_Ignore);
+	ResponseParams.CollisionResponse.SetResponse(ECC_WorldStatic, ECR_Block);
+	ResponseParams.CollisionResponse.SetResponse(ECC_WorldDynamic, ECR_Block);
+	ResponseParams.CollisionResponse.SetResponse(ECC_PhysicsBody, ECR_Block);
 	
 	ensure(GetInstigator());
 	if (APlayerController* PC = Cast<APlayerController>(GetInstigator()->GetController()); IsValid(PC))
