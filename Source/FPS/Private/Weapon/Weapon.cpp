@@ -3,9 +3,12 @@
 
 #include "Weapon/Weapon.h"
 
+#include "KismetTraceUtils.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "FPS/FPS.h"
 #include "GameFramework/Pawn.h"
 #include "Interfaces/PlayerInterface.h"
+#include "Kismet/KismetMathLibrary.h"
 
 AWeapon::AWeapon()
 {
@@ -28,6 +31,7 @@ AWeapon::AWeapon()
 	Mesh3P->SetHiddenInGame(true);
 	
 	AimFieldOfView = 65.0f;
+	TraceRadius = 5.f;
 }
 
 void AWeapon::OnRep_Instigator()
@@ -61,6 +65,56 @@ void AWeapon::AttachToOwningPawn() const
 	Mesh3P->AttachToComponent(PawnMesh3P, FAttachmentTransformRules::KeepRelativeTransform, AttachPoint);
 }
 
+
+void AWeapon::WeaponTrace(FHitResult& OutHit, float TraceLength)
+{
+	FCollisionQueryParams QueryParams;
+	QueryParams.bReturnPhysicalMaterial = true;
+	QueryParams.AddIgnoredActor(GetOwner());
+	
+	FCollisionResponseParams ResponseParams;
+	ResponseParams.CollisionResponse.SetAllChannels(ECR_Ignore);
+	ResponseParams.CollisionResponse.SetResponse(ECC_Pawn, ECR_Block);
+	ResponseParams.CollisionResponse.SetResponse(ECC_WorldStatic, ECR_Ignore);
+	ResponseParams.CollisionResponse.SetResponse(ECC_WorldDynamic, ECR_Ignore);
+	ResponseParams.CollisionResponse.SetResponse(ECC_PhysicsBody, ECR_Ignore);
+	
+	ensure(GetInstigator());
+	if (APlayerController* PC = Cast<APlayerController>(GetInstigator()->GetController()); IsValid(PC))
+	{
+		FVector EyesWorldLocation;
+		FRotator EyesWorldRotation;
+		PC->GetActorEyesViewPoint(EyesWorldLocation, EyesWorldRotation);
+		
+		const FVector EyesWorldDirection = UKismetMathLibrary::GetForwardVector(EyesWorldRotation);
+		const FVector Start = EyesWorldLocation;
+		const FVector End = Start + EyesWorldDirection * TraceLength;
+		
+		const bool bHit = GetWorld()->SweepSingleByChannel(
+			OutHit, 
+			Start, 
+			End, 
+			FQuat::Identity, 
+			FPSTraceChannels::ECC_Weapon,
+			FCollisionShape::MakeSphere(TraceRadius),
+			QueryParams,
+			ResponseParams
+		);
+		
+		DrawDebugSphereTraceSingle(
+			GetWorld(), 
+			Start, 
+			End,
+			TraceRadius, 
+			EDrawDebugTrace::ForDuration,
+			bHit,
+			OutHit,
+			FColor::Green,
+			FColor::Red,
+			5.f
+		);
+	}
+}
 
 void AWeapon::BeginPlay()
 {

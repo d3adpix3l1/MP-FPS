@@ -16,6 +16,7 @@ UCombatComponent::UCombatComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
 
+	TraceLength = 20'000;
 }
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -53,6 +54,7 @@ void UCombatComponent::Initiate_FireWeapon_Pressed()
 
 void UCombatComponent::Local_FireWeapon()
 {
+	if (!IsValid(CurrentWeapon)) return;
 	ensure(IsValid(WeaponData));
 	//get fire montage from WeaponData
 	UAnimMontage* Montage1P = WeaponData->FirstPersonMontages.FindChecked(CurrentWeapon->WeaponType).FireMontage;
@@ -62,6 +64,9 @@ void UCombatComponent::Local_FireWeapon()
 	{
 		Mesh1P->GetAnimInstance()->Montage_Play(Montage1P);
 	}
+	
+	FHitResult Hit;
+	CurrentWeapon->WeaponTrace(Hit, TraceLength);
 	
 	Server_FireWeapon();
 }
