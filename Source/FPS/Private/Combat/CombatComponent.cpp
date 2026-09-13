@@ -10,6 +10,7 @@
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "TimerManager.h"
 
 
 UCombatComponent::UCombatComponent()
@@ -17,6 +18,8 @@ UCombatComponent::UCombatComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 
 	TraceLength = 20'000;
+	bAiming = false;
+	bTriggerPressed = false;
 }
 
 void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
@@ -49,17 +52,19 @@ void UCombatComponent::Initiate_CycleWeapon()
 void UCombatComponent::Initiate_FireWeapon_Pressed()
 {
 	Local_FireWeapon();
-	
+	bTriggerPressed = true;
 }
 
 void UCombatComponent::Local_FireWeapon()
 {
 	if (!IsValid(CurrentWeapon)) return;
 	ensure(IsValid(WeaponData));
+	
 	//get fire montage from WeaponData
 	UAnimMontage* Montage1P = WeaponData->FirstPersonMontages.FindChecked(CurrentWeapon->WeaponType).FireMontage;
 	//Get the 1st person mesh
 	USkeletalMeshComponent* Mesh1P = IPlayerInterface::Execute_GetMesh1P(GetOwner()); //Get the 1st person mesh
+	
 	if (IsValid(Montage1P) && IsValid(Mesh1P))
 	{
 		Mesh1P->GetAnimInstance()->Montage_Play(Montage1P);
@@ -67,9 +72,23 @@ void UCombatComponent::Local_FireWeapon()
 	
 	FHitResult Hit;
 	CurrentWeapon->WeaponTrace(Hit, TraceLength);
+	
 	EPhysicalSurface ImpactSurfaceType = Hit.PhysMaterial.IsValid(false) ? Hit.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
 	CurrentWeapon->Local_Fire(Hit.ImpactPoint, Hit.ImpactNormal, ImpactSurfaceType, true);
+	
+	GetWorld()->GetTimerManager().SetTimer(FireTimer, this, &ThisClass::FireTimerFinished, CurrentWeapon->FireTime);
+	
 	Server_FireWeapon(Hit);
+}
+
+void UCombatComponent::FireTimerFinished()
+{
+	if (!IsValid(CurrentWeapon)) return;
+	//check if ammo, or if reloading
+	if (bTriggerPressed && CurrentWeapon->FireType == EFireType::Auto)
+	{
+		Local_FireWeapon();
+	}
 }
 
 void UCombatComponent::Server_FireWeapon_Implementation(const FHitResult& Hit)
@@ -102,7 +121,7 @@ void UCombatComponent::Multicast_FireWeapon_Implementation(const FHitResult& Hit
 }
 void UCombatComponent::Initiate_FireWeapon_Released()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Cyan, TEXT("Initiate_FireWeapon_Released"), false);
+	bTriggerPressed = false;
 }
 
 

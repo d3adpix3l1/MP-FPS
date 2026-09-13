@@ -7,6 +7,15 @@
 #include "GameFramework/Actor.h"
 #include "Weapon.generated.h"
 
+enum EPhysicalSurface : int;
+
+UENUM(BlueprintType)
+enum class EFireType : uint8
+{
+	Auto UMETA(DisplayName = "Automatic"),
+	SemiAuto UMETA(DisplayName = "Semi-Automatic")
+};
+
 UCLASS()
 class FPS_API AWeapon : public AActor
 {
@@ -31,8 +40,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Aiming")
 	float TraceRadius;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FPS|FireType")
+	EFireType FireType;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FPS|FireType")
+	float FireTime;
+	
 	void Local_Fire(const FVector& ImpactPoint, const FVector& ImpactNormal, TEnumAsByte<EPhysicalSurface> ImpactSurfaceType, bool bIsFirstPerson);
-
+	
 protected:
 	virtual void BeginPlay() override;
 	
