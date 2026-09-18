@@ -115,7 +115,7 @@ void UCombatComponent::Multicast_FireWeapon_Implementation(const FHitResult& Hit
 	{
 		CurrentWeapon->Rep_Fire(AuthAmmo);
 	}
-	else // do server controlled stuff
+	else // do server-controlled stuff
 	{
 		ensure(IsValid(WeaponData));
 		//get fire montage from WeaponData
@@ -186,6 +186,7 @@ void UCombatComponent::SpawnInventory()
 	if (Inventory.Num() > 0)
 	{
 		Equip(Inventory[0]);
+		InitializeWeaponWidgets();
 	}
 }
 
@@ -200,10 +201,21 @@ void UCombatComponent::DestroyInventory()
 	}
 }
 
+void UCombatComponent::InitializeWeaponWidgets() const
+{
+	if (IsValid(CurrentWeapon))
+	{
+		OnReticleChanged.Broadcast(CurrentWeapon->GetReticleDynamicMaterialInstance());
+		OnAmmoCounterChanged.Broadcast(CurrentWeapon->GetAmmoCounterDynamicMaterialInstance(), CurrentWeapon->Ammo, CurrentWeapon->MagCapacity);
+	}
+}
+
 void UCombatComponent::OnRep_CurrentWeapon(AWeapon* LastWeapon)
 {
 	if (!IsValid(CurrentWeapon)) return;
 	CurrentWeapon->AttachToOwningPawn();
+	IPlayerInterface::Execute_WeaponReplicated(GetOwner());
+	InitializeWeaponWidgets();
 }
 
 AWeapon* UCombatComponent::SpawnWeapon(TSubclassOf<AWeapon> WeaponClass) const
