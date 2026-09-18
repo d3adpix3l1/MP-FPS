@@ -26,7 +26,7 @@ public:
 	
 private:
 	TWeakObjectPtr<UMaterialInstanceDynamic> CurrentReticle_DynMatInst;
-	TWeakObjectPtr<UMaterialInstanceDynamic> CurrentAmmo_DynMatInst;
+	TWeakObjectPtr<UMaterialInstanceDynamic> CurrentAmmoCounter_DynMatInst;
 	
 	UFUNCTION()
 	void OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);

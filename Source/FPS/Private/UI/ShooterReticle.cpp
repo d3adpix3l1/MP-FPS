@@ -3,11 +3,24 @@
 
 #include "UI/ShooterReticle.h"
 
+#include "Combat/CombatComponent.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Character/ShooterCharacter.h"
+#include "Components/Image.h"
+#include "Weapon/Weapon.h"
+
+namespace Ammo
+{
+	const FName Rounds_Current = FName("Rounds_Current");
+	const FName Rounds_Max = FName("Rounds_Max");
+}
 
 void UShooterReticle::NativeOnInitialized()
 {
 	Super::NativeOnInitialized();
+	
+	Image_Reticle->SetRenderOpacity(0.f);
+	Image_AmmoCounter->SetRenderOpacity(0.f);
 	
 	GetOwningPlayer()->OnPossessedPawnChanged.AddDynamic(this, &ThisClass::OnPossessedPawnChanged);
 	
@@ -30,6 +43,13 @@ void UShooterReticle::NativeOnInitialized()
 	{
 		ShooterCharacter->OnWeaponFirstReplicated.AddDynamic(this, &ThisClass::OnWeaponFirstReplicated);
 	}
+	if (ShooterCharacter->HasAuthority())
+	{
+		AWeapon* Weapon = IPlayerInterface::Execute_GetCurrentWeapon(ShooterCharacter);
+		if (!IsValid(Weapon)) return;
+		OnReticleChanged(Weapon->GetReticleDynamicMaterialInstance());
+		OnAmmoCounterChanged(Weapon->GetAmmoCounterDynamicMaterialInstance(), Weapon->Ammo, Weapon->MagCapacity);
+	}
 }
 
 void UShooterReticle::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
@@ -49,6 +69,8 @@ void UShooterReticle::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
 	UCombatComponent* NewPawnCombat = UCombatComponent::FindCombatComponent(NewPawn);
 	if (IsValid(NewPawnCombat))
 	{
+		Image_Reticle->SetRenderOpacity(1.f);
+		Image_AmmoCounter->SetRenderOpacity(1.f);
 		NewPawnCombat->OnReticleChanged.AddDynamic(this, &ThisClass::OnReticleChanged);
 		NewPawnCombat->OnAmmoCounterChanged.AddDynamic(this, &ThisClass::OnAmmoCounterChanged);
 	}
@@ -62,11 +84,27 @@ void UShooterReticle::OnWeaponFirstReplicated(AWeapon* Weapon)
 
 void UShooterReticle::OnReticleChanged(UMaterialInstanceDynamic* Reticle_DynMatInst)
 {
-	//Set the material on the actual reticle widget to the dyn mat inst
+	CurrentReticle_DynMatInst = Reticle_DynMatInst;
+
+	FSlateBrush Brush;
+	Brush.SetResourceObject(Reticle_DynMatInst);
+	if (IsValid(Image_Reticle))
+	{
+		Image_Reticle->SetBrush(Brush);
+	}
 }
 
 void UShooterReticle::OnAmmoCounterChanged(UMaterialInstanceDynamic* AmmoCounter_DynMatInst, int32 RoundsCurrent,
 	int32 RoundsMax)
 {
-	//Set the material on the actual ammo counter widget to the dyn mat inst
+	CurrentAmmoCounter_DynMatInst = AmmoCounter_DynMatInst;
+	CurrentAmmoCounter_DynMatInst->SetScalarParameterValue(Ammo::Rounds_Current, RoundsCurrent);
+	CurrentAmmoCounter_DynMatInst->SetScalarParameterValue(Ammo::Rounds_Max, RoundsMax);
+	
+	FSlateBrush Brush;
+	Brush.SetResourceObject(AmmoCounter_DynMatInst);
+	if (IsValid(Image_AmmoCounter))
+	{
+		Image_AmmoCounter->SetBrush(Brush);
+	}
 }
