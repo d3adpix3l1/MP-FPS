@@ -11,6 +11,8 @@
 #include "Animation/AnimMontage.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "TimerManager.h"
+#include "FPS/FPS.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 UCombatComponent::UCombatComponent()
@@ -27,6 +29,39 @@ void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+	if (!IsValid(OwningPawn) || !OwningPawn->IsLocallyControlled()) return;
+	
+	APlayerController* PC = Cast<APlayerController>(OwningPawn->GetController());
+	if (!IsValid(PC)) return;
+	
+	FVector EyesWorldLocation;
+	FRotator EyesWorldRotation;
+	PC->GetActorEyesViewPoint(EyesWorldLocation, EyesWorldRotation);
+	const FVector EyesWorldDirection = UKismetMathLibrary::GetForwardVector(EyesWorldRotation);
+	
+	const FVector Start = EyesWorldLocation;
+	const FVector End = Start + EyesWorldDirection * TraceLength;
+	
+	FHitResult Hit;
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(GetOwner());
+	
+	FCollisionResponseParams ResponseParams;
+	ResponseParams.CollisionResponse.SetAllChannels(ECR_Ignore);
+	ResponseParams.CollisionResponse.SetResponse(ECC_Pawn, ECR_Block);
+	ResponseParams.CollisionResponse.SetResponse(ECC_PhysicsBody, ECR_Block);
+	
+	GetWorld()->LineTraceSingleByChannel(Hit, Start, End, FPSTraceChannels::ECC_Weapon, QueryParams, ResponseParams);
+	
+	bHitPlayer = IsValid(Hit.GetActor()) && Hit.GetActor()->Implements<UPlayerInterface>();
+	
+	if (bHitPlayer != bHitPlayerLastFrame)
+	{
+		OnTargetingPlayerStatusChanged.Broadcast(bHitPlayer);
+	}
+	
+	bHitPlayerLastFrame = bHitPlayer;
 }
 
 void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
@@ -36,6 +71,7 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 	DOREPLIFETIME(UCombatComponent, Inventory);
 	DOREPLIFETIME(UCombatComponent, CurrentWeapon);
 	DOREPLIFETIME_CONDITION(UCombatComponent, bAiming, COND_SkipOwner);
+	DOREPLIFETIME_CONDITION(UCombatComponent, bTriggerPressed, COND_OwnerOnly);
 }
 
 
@@ -82,7 +118,7 @@ void UCombatComponent::Local_FireWeapon()
 	EPhysicalSurface ImpactSurfaceType = Hit.PhysMaterial.IsValid(false) ? Hit.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
 	CurrentWeapon->Local_Fire(Hit.ImpactPoint, Hit.ImpactNormal, ImpactSurfaceType, true);
 	
-	OnRoundFired.Broadcast(CurrentWeapon->Ammo, CurrentWeapon->MagCapacity);
+	OnRoundFired.Broadcast(CurrentWeapon->Ammo, CurrentWeapon->MagCapacity, CurrentReserveAmmo);
 	
 	GetWorld()->GetTimerManager().SetTimer(FireTimer, this, &ThisClass::FireTimerFinished, CurrentWeapon->FireTime);
 	Server_FireWeapon(Hit);
@@ -162,6 +198,13 @@ void UCombatComponent::Server_Aim_Implementation(bool bPressed)
 }
 
 
+void UCombatComponent::OnRep_CurrentReserveAmmo()
+{
+	if (IsValid(CurrentWeapon))
+	{
+		OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, CurrentWeapon->Ammo);
+	}
+}
 
 void UCombatComponent::Local_Aim(bool bPressed)
 {
@@ -173,6 +216,9 @@ void UCombatComponent::Equip(AWeapon* Weapon)
 {
 	CurrentWeapon = Weapon;
 	CurrentWeapon->AttachToOwningPawn();
+	
+	CurrentReserveAmmo = ReserveAmmo.FindChecked(CurrentWeapon->WeaponType);
+	OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, Weapon->Ammo);
 }
 
 void UCombatComponent::SpawnInventory()
@@ -183,6 +229,7 @@ void UCombatComponent::SpawnInventory()
 	{
 		AWeapon* Weapon = SpawnWeapon(WeaponClass);
 		Inventory.AddUnique(Weapon);
+		ReserveAmmo.Add(Weapon->WeaponType, Weapon->StartingCarriedAmmo);
 	}
 	
 	if (Inventory.Num() > 0)
@@ -207,7 +254,7 @@ void UCombatComponent::InitializeWeaponWidgets() const
 {
 	if (IsValid(CurrentWeapon))
 	{
-		OnReticleChanged.Broadcast(CurrentWeapon->GetReticleDynamicMaterialInstance(), CurrentWeapon->ReticleParams);
+		OnReticleChanged.Broadcast(CurrentWeapon->GetReticleDynamicMaterialInstance(), CurrentWeapon->ReticleParams, bHitPlayer);
 		OnAmmoCounterChanged.Broadcast(CurrentWeapon->GetAmmoCounterDynamicMaterialInstance(), CurrentWeapon->Ammo, CurrentWeapon->MagCapacity);
 	}
 }
