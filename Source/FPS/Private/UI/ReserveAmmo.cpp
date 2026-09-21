@@ -36,6 +36,12 @@ void UReserveAmmo::NativeOnInitialized()
 	{
 		ShooterCharacter->OnWeaponFirstReplicated.AddDynamic(this, &ThisClass::OnWeaponFirstReplicated);
 	}
+	if (ShooterCharacter->HasAuthority())
+	{
+		AWeapon* Weapon = IPlayerInterface::Execute_GetCurrentWeapon(ShooterCharacter);
+		if (!IsValid(Weapon)) return;
+		OnCurrentReserveAmmoChanged(IPlayerInterface::Execute_GetReserveAmmo(ShooterCharacter), Weapon->Ammo);
+	}
 }
 
 void UReserveAmmo::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
@@ -59,7 +65,7 @@ void UReserveAmmo::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
 
 void UReserveAmmo::OnCurrentReserveAmmoChanged(int32 RoundsInReserve, int32 RoundsInWeapon)
 {
-	// TODO: Change WEapon Icon
+	// TODO: Change Weapon Icon
 	
 	if (IsValid(Text_Ammo))
 	{
