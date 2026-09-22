@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "Weapon/Weapon.h"
 #include "PlayerInterface.generated.h"
 
 struct FGameplayTag;
@@ -37,4 +38,10 @@ public:
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
 	int32 GetReserveAmmo() const;
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void Notify_CycleWeapon();
+	
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable)
+	void Notify_ReloadWeapon();
 };

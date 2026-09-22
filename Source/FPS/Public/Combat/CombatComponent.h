@@ -41,6 +41,9 @@ public:
 	void Initiate_Aim_Pressed();
 	void Initiate_Aim_Released();
 	
+	void Notify_CycleWeapon();
+	void Notify_ReloadWeapon();
+	
 	UPROPERTY(BlueprintAssignable)
 	FReticleChanged OnReticleChanged;
 	
@@ -63,6 +66,11 @@ public:
 	TObjectPtr<UWeaponData> WeaponData;
 	
 	void Equip(AWeapon* Weapon);
+	void EquipWeapon(AWeapon* Weapon);
+	
+	UFUNCTION(Server, Reliable)
+	void Server_EquipWeapon(AWeapon* Weapon);
+	
 	void SpawnInventory();
 	void DestroyInventory();
 	
@@ -82,6 +90,8 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "FPS|Weapon")
 	float TraceLength;
 	
+	UFUNCTION()
+	void BlendOut_CycleWeapon(UAnimMontage* Montage, bool bInterrupted);
 private:
 	TMap<FGameplayTag, int32> ReserveAmmo;
 	
@@ -92,6 +102,9 @@ private:
 	
 	UFUNCTION()
 	void OnRep_CurrentWeapon(AWeapon* LastWeapon);
+	
+	void SetCurrentWeapon(AWeapon* NewWeapon, AWeapon* LastWeapon);
+	
 	
 	UPROPERTY(Transient, Replicated)
 	TArray<AWeapon*> Inventory;
@@ -125,4 +138,15 @@ private:
 	
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_CycleWeapon(int32 WeaponIndex);
+	
+	void Local_ReloadWeapon();
+	
+	UFUNCTION(Server, Reliable)
+	void Server_ReloadWeapon();
+	
+	UFUNCTION(Client, Reliable)
+	void Client_ReloadWeapon(int32 NewWeaponAmmo, int32 NewCarriedAmmo);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_ReloadWeapon();
 };

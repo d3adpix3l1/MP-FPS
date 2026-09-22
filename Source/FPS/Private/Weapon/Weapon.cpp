@@ -38,7 +38,7 @@ AWeapon::AWeapon()
 	Ammo = 5;
 	StartingCarriedAmmo = 10;
 	Sequence = 0;
-	WeaponStatus = EWeaponStatus::Unequipped;
+	WeaponStatus = EWeaponStatus::Idle;
 }
 
 USkeletalMeshComponent* AWeapon::GetMesh1P() const
@@ -83,6 +83,15 @@ void AWeapon::AttachToOwningPawn(APawn* Pawn) const
 	
 	Mesh1P->AttachToComponent(PawnMesh1P, FAttachmentTransformRules::KeepRelativeTransform, AttachPoint);
 	Mesh3P->AttachToComponent(PawnMesh3P, FAttachmentTransformRules::KeepRelativeTransform, AttachPoint);
+}
+
+void AWeapon::DetachFromOwningPawn()
+{
+	Mesh1P->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+	Mesh1P->SetHiddenInGame(true);
+	
+	Mesh3P->DetachFromComponent(FDetachmentTransformRules::KeepRelativeTransform);
+	Mesh3P->SetHiddenInGame(true);
 }
 
 

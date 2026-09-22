@@ -245,6 +245,16 @@ int32 AShooterCharacter::GetReserveAmmo_Implementation() const
 	return Combat->CurrentReserveAmmo;
 }
 
+void AShooterCharacter::Notify_CycleWeapon_Implementation()
+{
+	Combat->Notify_CycleWeapon();
+}
+
+void AShooterCharacter::Notify_ReloadWeapon_Implementation()
+{
+	Combat->Notify_ReloadWeapon();
+}
+
 void AShooterCharacter::Input_CycleWeapon()
 {
 	Combat->Initiate_CycleWeapon();
