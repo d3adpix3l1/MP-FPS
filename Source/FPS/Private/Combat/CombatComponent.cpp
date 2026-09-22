@@ -1,18 +1,18 @@
-﻿// Copyright Perfect Pixel Games
+﻿#include "Combat/CombatComponent.h"
 
-
-#include "Combat/CombatComponent.h"
-#include "Engine/Engine.h"
-#include "GameFramework/Pawn.h"
-#include "Interfaces/PlayerInterface.h"
-#include "Net/UnrealNetwork.h"
-#include "Weapon/Weapon.h"
+#include "TimerManager.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Components/SkeletalMeshComponent.h"
-#include "TimerManager.h"
+#include "Data/WeaponData.h"
+#include "Engine/Engine.h"
 #include "FPS/FPS.h"
+#include "GameFramework/Pawn.h"
+#include "Interfaces/PlayerInterface.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Net/UnrealNetwork.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
+#include "Weapon/Weapon.h"
 
 
 UCombatComponent::UCombatComponent()
@@ -25,7 +25,10 @@ UCombatComponent::UCombatComponent()
 	Local_WeaponIndex = 0;
 }
 
-void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+
+
+void UCombatComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+                                     FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	
@@ -73,7 +76,6 @@ void UCombatComponent::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty
 	DOREPLIFETIME_CONDITION(UCombatComponent, bAiming, COND_SkipOwner);
 	DOREPLIFETIME_CONDITION(UCombatComponent, CurrentReserveAmmo, COND_OwnerOnly);
 }
-
 
 void UCombatComponent::Initiate_CycleWeapon()
 {
@@ -134,7 +136,6 @@ void UCombatComponent::Notify_CycleWeapon()
 	{
 		EquipWeapon(NewWeapon);
 	}
-	
 }
 
 void UCombatComponent::Notify_ReloadWeapon()
@@ -185,7 +186,7 @@ void UCombatComponent::BlendOut_CycleWeapon(UAnimMontage* Montage, bool bInterru
 	OnAmmoCounterChanged.Broadcast(CurrentWeapon->GetAmmoCounterDynamicMaterialInstance(), CurrentWeapon->Ammo, CurrentWeapon->MagCapacity);
 	OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, CurrentWeapon->Ammo, CurrentWeapon->WeaponIcon);
 	
-	if (bTriggerPressed && CurrentWeapon->FireType == EFireType::Auto)
+	if (bTriggerPressed && CurrentWeapon->FireType == EFireType::Auto && CurrentWeapon->Ammo > 0)
 	{
 		Local_FireWeapon();
 	}
@@ -207,24 +208,24 @@ void UCombatComponent::Local_FireWeapon()
 {
 	if (!IsValid(CurrentWeapon)) return;
 	ensure(IsValid(WeaponData));
-
+	
 	CurrentWeapon->WeaponStatus = EWeaponStatus::Firing;
-
+	
 	UAnimMontage* Montage1P = WeaponData->FirstPersonMontages.FindChecked(CurrentWeapon->WeaponType).FireMontage;
 	USkeletalMeshComponent* Mesh1P = IPlayerInterface::Execute_GetMesh1P(GetOwner());
 	if (IsValid(Montage1P) && IsValid(Mesh1P))
 	{
 		Mesh1P->GetAnimInstance()->Montage_Play(Montage1P);
 	}
-
+	
 	FHitResult Hit;
 	CurrentWeapon->WeaponTrace(Hit, TraceLength);
-
+	
 	EPhysicalSurface ImpactSurfaceType = Hit.PhysMaterial.IsValid(false) ? Hit.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
 	CurrentWeapon->Local_Fire(Hit.ImpactPoint, Hit.ImpactNormal, ImpactSurfaceType, true);
-
+	
 	OnRoundFired.Broadcast(CurrentWeapon->Ammo, CurrentWeapon->MagCapacity, CurrentReserveAmmo);
-
+	
 	GetWorld()->GetTimerManager().SetTimer(FireTimer, this, &ThisClass::FireTimerFinished, CurrentWeapon->FireTime);
 	Server_FireWeapon(Hit);
 }
@@ -241,12 +242,12 @@ int32 UCombatComponent::AdvanceWeaponIndex()
 void UCombatComponent::FireTimerFinished()
 {
 	if (!IsValid(CurrentWeapon)) return;
-	//check if ammo, or if reloading
+	
 	if (CurrentWeapon->WeaponStatus == EWeaponStatus::Firing)
 	{
 		CurrentWeapon->WeaponStatus = EWeaponStatus::Idle;
 	}
-
+	
 	if (bTriggerPressed && CurrentWeapon->FireType == EFireType::Auto && CurrentWeapon->Ammo > 0)
 	{
 		Local_FireWeapon();
@@ -272,28 +273,26 @@ void UCombatComponent::Multicast_FireWeapon_Implementation(const FHitResult& Hit
 	{
 		CurrentWeapon->Rep_Fire(AuthAmmo);
 	}
-	else // do server-controlled stuff
+	else
 	{
 		ensure(IsValid(WeaponData));
-		//get fire montage from WeaponData
-		UAnimMontage* Montage3P = WeaponData->ThirdPersonMontages.FindChecked(CurrentWeapon->WeaponType).FireMontage;
-		//Get the 1st person mesh
-		USkeletalMeshComponent* Mesh3P = IPlayerInterface::Execute_GetMesh3P(GetOwner()); //Get the 1st person mesh
+		
 		EPhysicalSurface ImpactSurfaceType = Hit.PhysMaterial.IsValid(false) ? Hit.PhysMaterial->SurfaceType.GetValue() : SurfaceType1;
 		CurrentWeapon->Local_Fire(Hit.ImpactPoint, Hit.ImpactNormal, ImpactSurfaceType, false);
+	
+		UAnimMontage* Montage3P = WeaponData->ThirdPersonMontages.FindChecked(CurrentWeapon->WeaponType).FireMontage;
+		USkeletalMeshComponent* Mesh3P = IPlayerInterface::Execute_GetMesh3P(GetOwner());
 		if (IsValid(Montage3P) && IsValid(Mesh3P))
 		{
 			Mesh3P->GetAnimInstance()->Montage_Play(Montage3P);
 		}
-		
 	}
 }
+
 void UCombatComponent::Initiate_FireWeapon_Released()
 {
 	bTriggerPressed = false;
 }
-
-
 
 void UCombatComponent::Initiate_ReloadWeapon()
 {
@@ -315,7 +314,6 @@ void UCombatComponent::Local_ReloadWeapon()
 	const bool bIsLocal = OwningPawn->IsLocallyControlled();
 	UAnimMontage* ReloadMontage = bIsLocal ? WeaponData->FirstPersonMontages.FindChecked(CurrentWeapon->WeaponType).ReloadMontage : WeaponData->ThirdPersonMontages.FindChecked(CurrentWeapon->WeaponType).ReloadMontage;
 	USkeletalMeshComponent* Mesh = bIsLocal ? IPlayerInterface::Execute_GetMesh1P(OwningPawn) : IPlayerInterface::Execute_GetMesh3P(OwningPawn);
-	
 	if (IsValid(ReloadMontage) && IsValid(Mesh))
 	{
 		Mesh->GetAnimInstance()->Montage_Play(ReloadMontage);
@@ -357,7 +355,6 @@ void UCombatComponent::Server_Aim_Implementation(bool bPressed)
 	Local_Aim(bPressed);
 }
 
-
 void UCombatComponent::OnRep_CurrentReserveAmmo()
 {
 	if (IsValid(CurrentWeapon))
@@ -372,18 +369,19 @@ void UCombatComponent::Local_Aim(bool bPressed)
 	OnAimingStatusChanged.Broadcast(bAiming);
 }
 
+
 void UCombatComponent::Equip(AWeapon* Weapon)
 {
 	CurrentWeapon = Weapon;
 	CurrentWeapon->AttachToOwningPawn(Cast<APawn>(GetOwner()));
 	
 	CurrentReserveAmmo = ReserveAmmo.FindChecked(CurrentWeapon->WeaponType);
-	OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, Weapon->Ammo, Weapon->WeaponIcon);
+	OnCurrentReserveAmmoChanged.Broadcast(CurrentReserveAmmo, Weapon->Ammo, CurrentWeapon->WeaponIcon);
 }
 
 void UCombatComponent::EquipWeapon(AWeapon* Weapon)
 {
-	if (!IsValid(Weapon) && !IsValid(GetOwner())) return;
+	if (!IsValid(Weapon) || !IsValid(GetOwner())) return;
 	if (GetOwner()->GetLocalRole() == ROLE_Authority)
 	{
 		SetCurrentWeapon(Weapon, CurrentWeapon);
@@ -487,6 +485,3 @@ AWeapon* UCombatComponent::SpawnWeapon(TSubclassOf<AWeapon> WeaponClass) const
 	
 	return GetWorld()->SpawnActor<AWeapon>(WeaponClass, SpawnInfo);
 }
-
-
-
