@@ -156,8 +156,7 @@ void AWeapon::Local_Fire(const FVector& ImpactPoint, const FVector& ImpactNormal
 	if (GetInstigator()->IsLocallyControlled())
 	{
 		Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
-		if (Ammo > 0)
-		{
+		if (!GetInstigator()->HasAuthority()){
 			++Sequence;
 		}
 		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Sequence: %d"), Sequence));
@@ -171,7 +170,7 @@ void AWeapon::Auth_Fire()
 
 void AWeapon::Rep_Fire(int32 AuthAmmo)
 {
-	if (GetInstigator()->IsLocallyControlled())
+	if (GetInstigator()->IsLocallyControlled() && !GetInstigator()->HasAuthority())
 	{
 		Ammo = AuthAmmo;
 		--Sequence;
