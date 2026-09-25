@@ -9,6 +9,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Stats/HealthComponent.h"
 #include "Weapon/Weapon.h"
 
 // Sets default values
@@ -45,6 +46,9 @@ AShooterCharacter::AShooterCharacter()
 	
 	Combat = CreateDefaultSubobject<UCombatComponent>("Combat");
 	Combat->SetIsReplicated(true);
+	
+	Health = CreateDefaultSubobject<UHealthComponent>("Health");
+	Health->SetIsReplicated(true);
 	
 	DefaultFieldOfView = 110.0f;
 	TurningStatus = ETurningInPlace::NotTurning;
