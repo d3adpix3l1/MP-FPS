@@ -159,7 +159,7 @@ void UCombatComponent::Notify_ReloadWeapon()
 
 void UCombatComponent::AddAmmo(const FGameplayTag& WeaponType, int32 AmmoAmount)
 {
-	if (GetOwner->HasAuthority() && !IsValid(CurrentWeapon)) return;
+	if (GetOwner()->HasAuthority() && !IsValid(CurrentWeapon)) return;
 	
 	if (!ReserveAmmo.Contains(WeaponType))
 	{
@@ -172,7 +172,7 @@ void UCombatComponent::AddAmmo(const FGameplayTag& WeaponType, int32 AmmoAmount)
 	if (CurrentWeapon->WeaponType.MatchesTagExact(WeaponType))
 	{
 		CurrentReserveAmmo = NewAmmo;
-		if (CurrentWeapon->Ammo ==  && NewAmmo > 0)
+		if (CurrentWeapon->Ammo == 0 && NewAmmo > 0)
 		{
 			Server_ReloadWeapon();
 		}
