@@ -269,7 +269,9 @@ void AShooterCharacter::AddAmmo_Implementation(const FGameplayTag& WeaponType, i
 
 bool AShooterCharacter::DoDamage_Implementation(float DamageAmount, AActor* DamageInstigator)
 {
-	// Change health by DamageAmount
+	if (!IsValid(Health)) return false;
+	
+	Health->ChangeHealthByAmount(-DamageAmount, DamageInstigator);
 	
 	// Calculate whether or not damage was lethal
 	
