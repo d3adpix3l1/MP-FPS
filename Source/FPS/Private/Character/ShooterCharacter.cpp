@@ -6,9 +6,15 @@
 #include "EnhancedInputComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Combat/CombatComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "Elimination/EliminationComponent.h"
+#include "FPS/FPS.h"
+#include "Game/ShooterGameModeBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Player/ShooterPlayerController.h"
 #include "Stats/HealthComponent.h"
 #include "Weapon/Weapon.h"
 
@@ -47,12 +53,16 @@ AShooterCharacter::AShooterCharacter()
 	Combat = CreateDefaultSubobject<UCombatComponent>("Combat");
 	Combat->SetIsReplicated(true);
 	
+	Elimination = CreateDefaultSubobject<UEliminationComponent>("Elimination");
+	Elimination->SetIsReplicated(false);
+	
 	Health = CreateDefaultSubobject<UHealthComponent>("Health");
 	Health->SetIsReplicated(true);
 	
 	DefaultFieldOfView = 110.0f;
 	TurningStatus = ETurningInPlace::NotTurning;
 	bWeaponFirstReplicated = false;
+	RespawnTime = 3.f;
 }
 
 // Called when the game starts or when spawned
@@ -60,9 +70,22 @@ void AShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	Health->OnDeathStarted.AddDynamic(this, &ThisClass::OnDeathStarted);
+	
 	FirstPersonCamera->SetFieldOfView(DefaultFieldOfView);
 	
 	StartingAimRotation = FRotator(0.f,GetBaseAimRotation().Yaw, 0.f);
+	
+	
+	if (AShooterPlayerController* PC = Cast<AShooterPlayerController>(GetController()); IsValid(PC))
+	{
+		PC->bPawnAlive = true;
+	}
+	
+	if (HasAuthority())
+	{
+		Combat->OnRoundReported.AddDynamic(Elimination, &UEliminationComponent::OnRoundReported);
+	}
 }
 
 void AShooterCharacter::BeginDestroy()
@@ -290,6 +313,40 @@ void AShooterCharacter::Multicast_HitReact_Implementation(int32 MontageIndex)
 		{
 			GetMesh()->GetAnimInstance()->Montage_Play(HitReacts[MontageIndex]);
 		}
+	}
+}
+
+void AShooterCharacter::OnDeathStarted()
+{
+	if (HasAuthority())
+	{
+		Combat->DestroyInventory();
+		GetWorld()->GetTimerManager().SetTimer(DeathTimer, this, &ThisClass::DeathTimerFinished, RespawnTime, false);
+	}
+	if (GetNetMode() != NM_DedicatedServer)
+	{
+		DeathEffects();
+		AShooterPlayerController* PC = Cast<AShooterPlayerController>(GetController());
+		if (IsValid(PC))
+		{
+			DisableInput(PC);
+			if (PC->IsLocalController())
+			{
+				PC->bPawnAlive = false;
+			}
+		}
+	}
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+	GetCapsuleComponent()->SetCollisionResponseToChannel(FPSTraceChannels::ECC_Weapon, ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(FPSTraceChannels::ECC_Weapon, ECR_Ignore);
+}
+
+void AShooterCharacter::DeathTimerFinished()
+{
+	AShooterGameModeBase* GM = Cast<AShooterGameModeBase>(UGameplayStatics::GetGameMode(this));
+	if (IsValid(GM))
+	{
+		GM->RequestRespawn(this, GetController());
 	}
 }
 
