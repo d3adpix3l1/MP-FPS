@@ -23,10 +23,14 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Elimination")
 	float SequentialElimInterval;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Elimination")
+	int32 ElimsNeededForStreak;
+	
 private:
 	
 	float LastElimTime;
 	int32 SequentialElims;
+	int32 Streak;
 	
 	AShooterPlayerState* GetPlayerStateFromActor(AActor* Actor); 
 	
@@ -34,4 +38,5 @@ private:
 	void ProcessElimination(bool bHeadshot, AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS);
 	void ProcessHeadshot(bool bHeadshot, ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS);
 	void ProcessSequentialElim(ESpecialElimType OutElimType, AShooterPlayerState* AttackerPS);
+	void ProcessStreaks(ESpecialElimType OutElimType, AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS);
 };

@@ -16,7 +16,8 @@ UEliminationComponent::UEliminationComponent()
 	SequentialElimInterval = 2.f;
 	LastElimTime = 0.f;
 	SequentialElims = 0;
-	
+	Streak = 0;
+	ElimsNeededForStreak = 5;
 }
 
 void UEliminationComponent::OnRoundReported(AActor* Attacker, AActor* Victim, bool bHit, bool bHeadshot, bool bLethal)
@@ -46,7 +47,7 @@ void UEliminationComponent::ProcessElimination(bool bHeadShot, AShooterPlayerSta
 	
 	ProcessHeadshot(bHeadShot, SpecialElimType, AttackerPS);
 	ProcessSequentialElim(SpecialElimType, AttackerPS);
-	// Process Streaks
+	ProcessStreaks(SpecialElimType, AttackerPS, VictimPS);
 	// Handle First Blood
 	// Update leader status
 	
@@ -85,6 +86,32 @@ void UEliminationComponent::ProcessSequentialElim(ESpecialElimType OutElimType, 
 		OutElimType |= ESpecialElimType::Sequential;
 		AttackerPS->AddSequentialElim(SequentialElims);
 	}
+}
+
+void UEliminationComponent::ProcessStreaks(ESpecialElimType OutElimType, AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS)
+{
+	++Streak;
+	if (Streak == ElimsNeededForStreak)
+	{
+		OutElimType |= ESpecialElimType::Streak;
+		AttackerPS->SetOnStreak(true);
+		AttackerPS->UpdateHighestStreak(Streak);
+	}
+	
+	if (VictimPS->IsOnStreak())
+	{
+		OutElimType |= ESpecialElimType::ShowStopper;
+		AttackerPS->AddShowStopperElim();
+		VictimPS->SetOnStreak(false);
+	}
+	
+	if (AttackerPS->GetLastAttacker() == VictimPS)
+	{
+		OutElimType |= ESpecialElimType::Revenge;
+		AttackerPS->AddRevengeElim();
+		AttackerPS->SetLastAttacker(nullptr);
+	}
+	VictimPS->SetLastAttacker(AttackerPS);
 }
 
 void UEliminationComponent::ProcessHitOrMiss(bool bHit, AShooterPlayerState* AttackerPS)
