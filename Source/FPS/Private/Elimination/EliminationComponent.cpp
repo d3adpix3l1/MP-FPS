@@ -5,6 +5,7 @@
 #include "GameFramework/Pawn.h"
 #include "Player/ShooterPlayerState.h"
 #include "ShooterTypes/ShooterTypes.h"
+#include "Engine/World.h"
 
 
 // Sets default values
@@ -12,6 +13,9 @@ UEliminationComponent::UEliminationComponent()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryComponentTick.bCanEverTick = false;
+	SequentialElimInterval = 2.f;
+	LastElimTime = 0.f;
+	SequentialElims = 0;
 	
 }
 
@@ -40,8 +44,8 @@ void UEliminationComponent::ProcessElimination(bool bHeadShot, AShooterPlayerSta
 	
 	ESpecialElimType SpecialElimType{};
 	
-	// Process Headshot Elims
-	// Process sequential Eliminations
+	ProcessHeadshot(bHeadShot, SpecialElimType, AttackerPS);
+	ProcessSequentialElim(SpecialElimType, AttackerPS);
 	// Process Streaks
 	// Handle First Blood
 	// Update leader status
@@ -50,6 +54,37 @@ void UEliminationComponent::ProcessElimination(bool bHeadShot, AShooterPlayerSta
 		// tell the client which special elims we got
 	// else (we just got a regular elim)
 		// Just tell the client we got a regular elim
+}
+
+void UEliminationComponent::ProcessHeadshot(bool bHeadshot, ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS)
+{
+	if (bHeadshot)
+	{
+		OutElimType |= ESpecialElimType::Headshot;
+		AttackerPS->AddHeadShotElim();
+	}
+}
+
+void UEliminationComponent::ProcessSequentialElim(ESpecialElimType OutElimType, AShooterPlayerState* AttackerPS)
+{
+	const float CurrentTime = GetWorld()->GetTimeSeconds();
+	
+	if (CurrentTime - LastElimTime <= SequentialElimInterval)
+	{
+		++SequentialElims;
+	}
+	else
+	{
+		SequentialElims = 1;
+	}
+	
+	LastElimTime = CurrentTime;
+	
+	if (SequentialElims > 1)
+	{
+		OutElimType |= ESpecialElimType::Sequential;
+		AttackerPS->AddSequentialElim(SequentialElims);
+	}
 }
 
 void UEliminationComponent::ProcessHitOrMiss(bool bHit, AShooterPlayerState* AttackerPS)
