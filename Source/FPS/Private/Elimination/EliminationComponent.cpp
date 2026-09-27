@@ -4,6 +4,7 @@
 #include "Elimination/EliminationComponent.h"
 #include "GameFramework/Pawn.h"
 #include "Player/ShooterPlayerState.h"
+#include "ShooterTypes/ShooterTypes.h"
 
 
 // Sets default values
@@ -32,10 +33,23 @@ void UEliminationComponent::OnRoundReported(AActor* Attacker, AActor* Victim, bo
 	}
 }
 
-void UEliminationComponent::ProcessElimination(bool bHeadShot, AShooterPlayerState* AttackerPS,
-	AShooterPlayerState* VictimPS)
+void UEliminationComponent::ProcessElimination(bool bHeadShot, AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS)
 {
+	AttackerPS->AddScoredElim();
+	VictimPS->AddDefeat();
 	
+	ESpecialElimType SpecialElimType{};
+	
+	// Process Headshot Elims
+	// Process sequential Eliminations
+	// Process Streaks
+	// Handle First Blood
+	// Update leader status
+	
+	//if (has special elim types)
+		// tell the client which special elims we got
+	// else (we just got a regular elim)
+		// Just tell the client we got a regular elim
 }
 
 void UEliminationComponent::ProcessHitOrMiss(bool bHit, AShooterPlayerState* AttackerPS)
