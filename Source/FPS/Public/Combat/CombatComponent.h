@@ -19,7 +19,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FRoundFired, int32, RoundsCurrent
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAimingStatusChanged, bool, bIsAiming);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTargetingPlayerStatusChanged, bool, bTargetingPlayer);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FCurrentReserveAmmoChanged, int32, RoundsInReserve, int32, RoundsInWeapon, UMaterialInterface*, WeaponIconMaterial);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FRoundReported, AActor, Attacker, AActor, Victim, bool, bHit, bool, bHeadshot, bool, bLethal);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FRoundReported, AActor*, Attacker, AActor*, Victim, bool, bHit, bool, bHeadshot, bool, bLethal);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FPS_API UCombatComponent : public UActorComponent

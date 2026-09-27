@@ -14,7 +14,7 @@ UEliminationComponent::UEliminationComponent()
 
 void UEliminationComponent::OnRoundReported(AActor* Attacker, AActor* Victim, bool bHit, bool bHeadshot, bool bLethal)
 {
-	
+	UE_LOG(LogTemp, Warning, TEXT("Hit: %d, Headshot: %d, Lethal: %d"), bHit, bHeadshot, bLethal);
 }
 
 

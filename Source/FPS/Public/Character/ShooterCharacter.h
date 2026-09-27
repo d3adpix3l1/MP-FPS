@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Combat/CombatComponent.h"
+#include "Elimination/EliminationComponent.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/PlayerInterface.h"
 #include "ShooterTypes/ShooterTypes.h"
