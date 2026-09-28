@@ -7,7 +7,7 @@
 #include "ShooterTypes/ShooterTypes.h"
 #include "SpecialElimData.generated.h"
 
-USTRUCT()
+USTRUCT(BlueprintType)
 struct FSpecialElimInfo
 {
 	GENERATED_BODY()
