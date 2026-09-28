@@ -5,7 +5,8 @@
 
 AShooterPlayerState::AShooterPlayerState()
 {
-	NetUpdateFrequency = 100.f;
+	SetNetUpdateFrequency(100.f);
+	
 	ScoredElims = 0.f;
 	Defeats = 0.f;
 	Hits = 0.f;
@@ -121,4 +122,24 @@ bool AShooterPlayerState::IsOnStreak() const
 APlayerState* AShooterPlayerState::GetLastAttacker() const
 {
 	return LastAttacker.IsValid() ? LastAttacker.Get() : nullptr;
+}
+
+int32 AShooterPlayerState::GetScoredElims() const
+{
+	return ScoredElims;
+}
+
+void AShooterPlayerState::Client_ScoredElim_Implementation(int32 ElimScore)
+{
+	//
+}
+
+void AShooterPlayerState::Client_SpecialElim_Implementation(const ESpecialElimType& SpecialElim, int32 SequentialElimCount, int32 StreakCount, int32 ElimScore)
+{
+	//
+}
+
+void AShooterPlayerState::Client_LostTheLead_Implementation()
+{
+	//TODO: show to client with widgets in the hud
 }
