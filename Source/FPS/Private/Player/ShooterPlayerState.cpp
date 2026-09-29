@@ -23,6 +23,8 @@ AShooterPlayerState::AShooterPlayerState()
 	ShowStopperElims = 0;
 	bFirstBlood = false;
 	bWinner = false;
+	bIsProcessingQueue = false;
+	ElimDisplayTime = 0.5f;
 }
 
 void AShooterPlayerState::AddScoredElim()
@@ -152,12 +154,79 @@ TArray<ESpecialElimType> AShooterPlayerState::DecodeElimBitmask(ESpecialElimType
 
 void AShooterPlayerState::Client_ScoredElim_Implementation(int32 ElimScore)
 {
-	
+	OnScoreChanged.Broadcast(ElimScore);
 }
 
 void AShooterPlayerState::Client_SpecialElim_Implementation(const ESpecialElimType& SpecialElim, int32 SequentialElimCount, int32 StreakCount, int32 ElimScore)
 {
+	ensure(IsValid(SpecialElimData));
 	
+	OnScoreChanged.Broadcast(ElimScore);
+	
+	TArray<ESpecialElimType> ElimTypes = DecodeElimBitmask(SpecialElim);
+	for (ESpecialElimType ElimType : ElimTypes)
+	{
+		FSpecialElimInfo& ElimMessageInfo = SpecialElimData->SpecialElimInfo.FindChecked(ElimType);
+		if (ElimType == ESpecialElimType::Sequential)
+		{
+			ElimMessageInfo.SequentialElimCount = SequentialElimCount;
+		}
+		if (ElimType == ESpecialElimType::Streak)
+		{
+			ElimMessageInfo.StreakCount = StreakCount;
+		}
+		ElimMessageInfo.ElimType = ElimType;
+		
+		// FIFO Data Structure Queue
+		SpecialElimQueue.Enqueue(ElimMessageInfo);
+	}
+	if (!bIsProcessingQueue)
+	{
+		ProcessNextSpecialElim();
+	}
+}
+
+void AShooterPlayerState::ProcessNextSpecialElim()
+{
+	FSpecialElimInfo ElimInfo;
+	if (SpecialElimQueue.Dequeue(ElimInfo))
+	{
+		bIsProcessingQueue = true;
+		ShowSpecialElim(ElimInfo);
+		
+		GetWorldTimerManager().SetTimerForNextTick([this]()
+		{
+			FTimerHandle TimerHandle;
+			GetWorldTimerManager().SetTimer(TimerHandle, this, &AShooterPlayerState::ProcessNextSpecialElim, ElimDisplayTime, false);
+		});
+	}
+	else
+	{
+		bIsProcessingQueue = false;
+	}
+}
+
+void AShooterPlayerState::ShowSpecialElim(const FSpecialElimInfo& ElimMessageInfo)
+{
+	FString ElimMessageString = ElimMessageInfo.ElimMessage;
+	if (ElimMessageInfo.ElimType == ESpecialElimType::Sequential)
+	{
+		if (ElimMessageInfo.SequentialElimCount == 2) ElimMessageString = FString("Double Kill!");
+		else if (ElimMessageInfo.SequentialElimCount == 3) ElimMessageString = FString("Triple Kill!");
+		else if (ElimMessageInfo.SequentialElimCount == 4) ElimMessageString = FString("Quad Kill!");
+		else if (ElimMessageInfo.SequentialElimCount > 4) ElimMessageString = FString::Printf(TEXT("Multi-Kill! x%d!"), ElimMessageInfo.SequentialElimCount);
+	}
+	if (ElimMessageInfo.ElimType == ESpecialElimType::Streak) ElimMessageString = FString::Printf(TEXT("Streak x%d!"), ElimMessageInfo.StreakCount);
+	
+	if (IsValid(SpecialElimWidgetClass))
+	{
+		USpecialElim* ElimWidget = CreateWidget<USpecialElim>(GetPlayerController(), SpecialElimWidgetClass);
+		if (IsValid(ElimWidget))
+		{
+			ElimWidget->InitializeWidget(ElimMessageString, ElimMessageInfo.ElimIcon);
+			ElimWidget->AddToViewport();
+		}
+	}
 }
 
 void AShooterPlayerState::Client_LostTheLead_Implementation()
@@ -172,7 +241,6 @@ void AShooterPlayerState::Client_LostTheLead_Implementation()
 		{
 			ElimWidget->InitializeWidget(ElimMessageInfo.ElimMessage, ElimMessageInfo.ElimIcon);
 			ElimWidget->AddToViewport();
-			
 		}
 	}
 }

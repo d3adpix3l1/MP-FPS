@@ -12,12 +12,17 @@ class USpecialElim;
 class USpecialElimData;
 enum class ESpecialElimType : uint16;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FScoreChanged, int32, NewScore);
+
 UCLASS()
 class FPS_API AShooterPlayerState : public APlayerState
 {
 	GENERATED_BODY()
 public:
 	AShooterPlayerState();
+	
+	UPROPERTY(BlueprintAssignable)
+	FScoreChanged OnScoreChanged;
 	
 	void AddScoredElim();
 	void AddDefeat();
@@ -53,6 +58,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "FPS|SpecialElims")
 	TSubclassOf<USpecialElim> SpecialElimWidgetClass;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "FPS|SpecialElims")
+	float ElimDisplayTime;
+	
 private:
 	int32 ScoredElims;
 	int32 Defeats;
@@ -69,6 +77,9 @@ private:
 	bool bWinner;
 	
 	TWeakObjectPtr<APlayerState> LastAttacker;
-	
+	void ProcessNextSpecialElim();
+	void ShowSpecialElim(const FSpecialElimInfo& ElimMessageInfo);
 	TArray<ESpecialElimType> DecodeElimBitmask(ESpecialElimType ElimTypeBitmask);
+	TQueue<FSpecialElimInfo> SpecialElimQueue;
+	bool bIsProcessingQueue;
 };
