@@ -1,4 +1,4 @@
-// Copyright Perfect Pixel Games
+// Copyright Druid Mechanics
 
 
 #include "Character/ShooterCharacter.h"
@@ -16,20 +16,18 @@
 #include "Game/ShooterGameModeBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Stats/HealthComponent.h"
+#include "Health/HealthComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Player/ShooterPlayerController.h"
 #include "Weapon/Weapon.h"
 
-// Sets default values
 AShooterCharacter::AShooterCharacter()
 {
- 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	
 	GetCharacterMovement()->MovementState.bCanCrouch = true;
-	
+
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
 	SpringArm->SetupAttachment(GetRootComponent());
 	SpringArm->TargetArmLength = 0.f;
@@ -63,23 +61,19 @@ AShooterCharacter::AShooterCharacter()
 	Health = CreateDefaultSubobject<UHealthComponent>("Health");
 	Health->SetIsReplicated(true);
 	
-	DefaultFieldOfView = 110.0f;
+	DefaultFieldOfView = 90.0f;
 	TurningStatus = ETurningInPlace::NotTurning;
 	bWeaponFirstReplicated = false;
 	RespawnTime = 3.f;
 }
 
-// Called when the game starts or when spawned
 void AShooterCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
 	Health->OnDeathStarted.AddDynamic(this, &ThisClass::OnDeathStarted);
-	
 	FirstPersonCamera->SetFieldOfView(DefaultFieldOfView);
-	
-	StartingAimRotation = FRotator(0.f,GetBaseAimRotation().Yaw, 0.f);
-	
+	StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 	
 	if (AShooterPlayerController* PC = Cast<AShooterPlayerController>(GetController()); IsValid(PC))
 	{
@@ -107,10 +101,9 @@ FRotator AShooterCharacter::GetFixedAimRotation() const
 	FRotator AimRotation = GetBaseAimRotation();
 	if (AimRotation.Pitch > 90.f && !IsLocallyControlled())
 	{
-		//map pitch from [270, 360] to [-90, 0]
+		// map pitch from [270, 360) to [-90, 0]
 		const FVector2D InRange(270.f, 360.f);
 		const FVector2D OutRange(-90.f, 0.f);
-		
 		AimRotation.Pitch = FMath::GetMappedRangeValueClamped(InRange, OutRange, AimRotation.Pitch);
 	}
 	
@@ -125,9 +118,9 @@ bool AShooterCharacter::HasCurrentWeapon() const
 void AShooterCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
 	CalculateTurnInPlaceParameters(DeltaTime);
 	CalculateFABRIKSocketTransform();
-	
 }
 
 void AShooterCharacter::CalculateTurnInPlaceParameters(float DeltaTime)
@@ -135,24 +128,24 @@ void AShooterCharacter::CalculateTurnInPlaceParameters(float DeltaTime)
 	FVector Velocity = GetVelocity();
 	Velocity.Z = 0.f;
 	float Speed = Velocity.Size();
-	
 	bool bIsInAir = GetCharacterMovement()->IsFalling();
 	
-	if (Speed == 0 && !bIsInAir) //Standing still, not jumping
+	if (Speed == 0.f && !bIsInAir) // standing still, not jumping
 	{
 		FRotator CurrentAimRotation(0.f, GetBaseAimRotation().Yaw, 0.f);
-		//StartingAimRotation initialy set in BeginPlay()
+		// StartingAimRotation initially set in BeginPlay
 		FRotator DeltaAimRotation = UKismetMathLibrary::NormalizedDeltaRotator(CurrentAimRotation, StartingAimRotation);
-		// store the Yaw of the delta aim rotation (AO_Yaw)
 		AO_Yaw = DeltaAimRotation.Yaw;
+		
 		if (TurningStatus == ETurningInPlace::NotTurning)
 		{
 			InterpAO_Yaw = AO_Yaw;
 		}
-		TurnInPlace(DeltaTime); //interpolates AO_Yaw back to 0
+		
+		TurnInPlace(DeltaTime); // interpolates the InterpAO_Yaw value to zero.
 	}
-	
-	if (Speed > 0 or bIsInAir) //running or jumping
+
+	if (Speed > 0.f || bIsInAir)
 	{
 		StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		AO_Yaw = 0.f;
@@ -162,7 +155,7 @@ void AShooterCharacter::CalculateTurnInPlaceParameters(float DeltaTime)
 		MovementOffsetYaw = UKismetMathLibrary::NormalizedDeltaRotator(MovementRotation, AimRotation).Yaw;
 		TurningStatus = ETurningInPlace::NotTurning;
 	}
-	
+
 	AO_Yaw *= -1.f;
 }
 
@@ -171,14 +164,14 @@ void AShooterCharacter::TurnInPlace(float DeltaTime)
 	if (AO_Yaw > 90.f)
 	{
 		TurningStatus = ETurningInPlace::Right;
-	} else if (AO_Yaw < -90.f)
+	}
+	else if (AO_Yaw < -90.f)
 	{
 		TurningStatus = ETurningInPlace::Left;
 	}
-	if (TurningStatus != ETurningInPlace::NotTurning) //we are turning
+	if (TurningStatus != ETurningInPlace::NotTurning) // we are turning
 	{
-		//Interpolate InterpAO_Yaw down to zero.
-		InterpAO_Yaw = FMath::FInterpTo(InterpAO_Yaw, 0.f, DeltaTime, 4.0);
+		InterpAO_Yaw = FMath::FInterpTo(InterpAO_Yaw, 0.f, DeltaTime, 4.0f);
 		AO_Yaw = InterpAO_Yaw;
 		if (FMath::Abs(AO_Yaw) < 5.f)
 		{
@@ -186,7 +179,6 @@ void AShooterCharacter::TurnInPlace(float DeltaTime)
 			StartingAimRotation = FRotator(0.f, GetBaseAimRotation().Yaw, 0.f);
 		}
 	}
-		
 }
 
 void AShooterCharacter::CalculateFABRIKSocketTransform()
@@ -202,19 +194,18 @@ void AShooterCharacter::CalculateFABRIKSocketTransform()
 			FABRIK_SocketTransform.GetLocation(), 
 			FABRIK_SocketTransform.GetRotation().Rotator(), 
 			OutLocation, 
-			OutRotation
-			);
+			OutRotation);
 		FABRIK_SocketTransform.SetLocation(OutLocation);
 		FABRIK_SocketTransform.SetRotation(OutRotation.Quaternion());
 	}
 }
 
-// Called to bind functionality to input
 void AShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	UEnhancedInputComponent* ShooterInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent);
+	
 	ShooterInputComponent->BindAction(CycleWeaponAction, ETriggerEvent::Started, this, &ThisClass::Input_CycleWeapon);
 	ShooterInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Started, this, &ThisClass::Input_FireWeapon_Pressed);
 	ShooterInputComponent->BindAction(FireWeaponAction, ETriggerEvent::Completed, this, &ThisClass::Input_FireWeapon_Released);
@@ -230,14 +221,25 @@ void AShooterCharacter::PossessedBy(AController* NewController)
 	{
 		Combat->SpawnInventory();
 	}
+	
+	if (AShooterPlayerController* PC = Cast<AShooterPlayerController>(GetController()); IsValid(PC))
+	{
+		PC->bPawnAlive = true;
+	}
 }
 
 void AShooterCharacter::OnRep_PlayerState()
 {
 	Super::OnRep_PlayerState();
+	
 	if (IsValid(Combat))
 	{
 		Combat->InitializeWeaponWidgets();
+	}
+	
+	if (AShooterPlayerController* PC = Cast<AShooterPlayerController>(GetController()); IsValid(PC))
+	{
+		PC->bPawnAlive = true;
 	}
 }
 
@@ -298,15 +300,13 @@ bool AShooterCharacter::DoDamage_Implementation(float DamageAmount, AActor* Dama
 {
 	if (!IsValid(Health)) return false;
 	
-	
 	if (Health->ChangeHealthByAmount(-DamageAmount, DamageInstigator))
 	{
-		return true;// ChangeHealthByAmount returns true if lethal
+		return true; // ChangeHealthByAmount returns true if lethal
 	}
 	
-	const int32 MontageSelection = FMath::RandRange(0, HitReacts.Num() -1);
+	const int32 MontageSelection = FMath::RandRange(0, HitReacts.Num() - 1);
 	Multicast_HitReact(MontageSelection);
-	
 	
 	return false;
 }
@@ -327,13 +327,12 @@ void AShooterCharacter::OnDeathStarted()
 	if (HasAuthority())
 	{
 		Combat->DestroyInventory();
-		GetWorld()->GetTimerManager().SetTimer(DeathTimer, this, &ThisClass::DeathTimerFinished, RespawnTime, false);
+		GetWorld()->GetTimerManager().SetTimer(DeathTimer, this, &ThisClass::DeathTimerFinished, RespawnTime);
 	}
 	if (GetNetMode() != NM_DedicatedServer)
 	{
 		DeathEffects();
-		AShooterPlayerController* PC = Cast<AShooterPlayerController>(GetController());
-		if (IsValid(PC))
+		if (AShooterPlayerController* PC = Cast<AShooterPlayerController>(GetController()); IsValid(PC))
 		{
 			DisableInput(PC);
 			if (PC->IsLocalController())
@@ -387,6 +386,3 @@ void AShooterCharacter::Input_Aim_Released()
 	Combat->Initiate_Aim_Released();
 	OnAim(false);
 }
-
-
-

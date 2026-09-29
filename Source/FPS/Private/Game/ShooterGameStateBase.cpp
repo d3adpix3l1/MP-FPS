@@ -1,4 +1,4 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 
 #include "Game/ShooterGameStateBase.h"

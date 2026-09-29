@@ -1,4 +1,4 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 
 #include "UI/Elims/SpecialElim.h"
@@ -29,3 +29,5 @@ void USpecialElim::CenterWidget(UUserWidget* Widget, float VerticalRatio)
 	Widget->SetAlignmentInViewport(FVector2D(0.5f, 0.5f)); // Align widget center to the center of the viewport
 	Widget->SetPositionInViewport(CenterPosition, true);
 }
+
+

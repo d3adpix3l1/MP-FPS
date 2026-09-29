@@ -1,4 +1,4 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 
 #include "UI/Elims/ScoreWidget.h"

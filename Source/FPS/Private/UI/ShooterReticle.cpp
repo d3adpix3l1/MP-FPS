@@ -1,12 +1,12 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 
 #include "UI/ShooterReticle.h"
 
-#include "Combat/CombatComponent.h"
-#include "Materials/MaterialInstanceDynamic.h"
 #include "Character/ShooterCharacter.h"
+#include "Combat/CombatComponent.h"
 #include "Components/Image.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "Weapon/Weapon.h"
 
 namespace Ammo
@@ -15,11 +15,10 @@ namespace Ammo
 	const FName Rounds_Max = FName("Rounds_Max");
 }
 
-namespace Reticle{
+namespace Reticle
+{
 	const FName RoundedCornerScale = FName("RoundedCornerScale");
 	const FName ShapeCutThickness = FName("ShapeCutThickness");
-	const FName ShapeCutFactor = FName("ShapeCutFactor");
-	const FName ScaleFactor = FName("ScaleFactor");
 	const FName Inner_RGBA = FName("Inner_RGBA");
 }
 
@@ -40,7 +39,6 @@ void UShooterReticle::NativeOnInitialized()
 	
 	AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(GetOwningPlayer()->GetPawn());
 	if (!IsValid(ShooterCharacter)) return;
-	
 	UCombatComponent* Combat = UCombatComponent::FindCombatComponent(ShooterCharacter);
 	if (!IsValid(Combat)) return;
 	
@@ -54,7 +52,6 @@ void UShooterReticle::NativeOnInitialized()
 			OnReticleChanged(Weapon->GetReticleDynamicMaterialInstance(), Weapon->ReticleParams, Combat->bHitPlayer);
 			OnAmmoCounterChanged(Weapon->GetAmmoCounterDynamicMaterialInstance(), Weapon->Ammo, Weapon->MagCapacity);
 		}
-		
 	}
 	else
 	{
@@ -81,8 +78,8 @@ void UShooterReticle::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	
 	_BaseCornerScaleFactor_TargetingPlayer = FMath::FInterpTo(_BaseCornerScaleFactor_TargetingPlayer, bTargetingPlayer ? CurrentReticleParams.ScaleFactor_Targeting : CurrentReticleParams.ScaleFactor_NotTargeting, InDeltaTime, CurrentReticleParams.TargetingPlayerInterpSpeed);
 	
-	BaseCornerScaleFactor = _BaseCornerScaleFactor_RoundFired + _BaseCornerScaleFactor_Aiming;
-	BaseShapeCutFactor = _BaseShapeCutFactor_RoundFired - _BaseShapeCutFactor_Aiming;
+	BaseCornerScaleFactor = _BaseCornerScaleFactor_RoundFired + _BaseCornerScaleFactor_Aiming + _BaseCornerScaleFactor_TargetingPlayer;
+	BaseShapeCutFactor = _BaseShapeCutFactor_RoundFired + _BaseShapeCutFactor_Aiming;
 	
 	if (CurrentReticle_DynMatInst.IsValid())
 	{
@@ -102,7 +99,6 @@ void UShooterReticle::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
 		OldPawnCombat->OnAimingStatusChanged.RemoveDynamic(this, &ThisClass::OnAimingStatusChanged);
 		OldPawnCombat->OnTargetingPlayerStatusChanged.RemoveDynamic(this, &ThisClass::OnTargetingPlayerStatusChanged);
 	}
-	
 	UCombatComponent* NewPawnCombat = UCombatComponent::FindCombatComponent(NewPawn);
 	if (IsValid(NewPawnCombat))
 	{
@@ -122,13 +118,13 @@ void UShooterReticle::OnWeaponFirstReplicated(AWeapon* Weapon, bool bIsTargeting
 	OnAmmoCounterChanged(Weapon->GetAmmoCounterDynamicMaterialInstance(), Weapon->Ammo, Weapon->MagCapacity);
 }
 
-void UShooterReticle::OnReticleChanged(UMaterialInstanceDynamic* Reticle_DynMatInst,  const FReticleParams& ReticleParams,  bool bCurrentlyTargetingPlayer)
+void UShooterReticle::OnReticleChanged(UMaterialInstanceDynamic* ReticleDynMatInst, const FReticleParams& ReticleParams, bool bCurrentlyTargetingPlayer)
 {
 	CurrentReticleParams = ReticleParams;
-	CurrentReticle_DynMatInst = Reticle_DynMatInst;
-
+	CurrentReticle_DynMatInst = ReticleDynMatInst;
+	
 	FSlateBrush Brush;
-	Brush.SetResourceObject(Reticle_DynMatInst);
+	Brush.SetResourceObject(ReticleDynMatInst);
 	if (IsValid(Image_Reticle))
 	{
 		Image_Reticle->SetBrush(Brush);
@@ -137,16 +133,16 @@ void UShooterReticle::OnReticleChanged(UMaterialInstanceDynamic* Reticle_DynMatI
 	OnTargetingPlayerStatusChanged(bCurrentlyTargetingPlayer);
 }
 
-void UShooterReticle::OnAmmoCounterChanged(UMaterialInstanceDynamic* AmmoCounter_DynMatInst, int32 RoundsCurrent,
+void UShooterReticle::OnAmmoCounterChanged(UMaterialInstanceDynamic* AmmoCounterDynMatInst, int32 RoundsCurrent,
 	int32 RoundsMax)
 {
-	CurrentAmmoCounter_DynMatInst = AmmoCounter_DynMatInst;
+	CurrentAmmoCounter_DynMatInst = AmmoCounterDynMatInst;
 	CurrentAmmoCounter_DynMatInst->SetScalarParameterValue(Ammo::Rounds_Current, RoundsCurrent);
 	CurrentAmmoCounter_DynMatInst->SetScalarParameterValue(Ammo::Rounds_Max, RoundsMax);
 	
 	FSlateBrush Brush;
-	Brush.SetResourceObject(AmmoCounter_DynMatInst);
-	if (IsValid(Image_AmmoCounter))
+	Brush.SetResourceObject(AmmoCounterDynMatInst);
+	if (Image_AmmoCounter)
 	{
 		Image_AmmoCounter->SetBrush(Brush);
 	}
@@ -156,6 +152,7 @@ void UShooterReticle::OnRoundFired(int32 RoundsCurrent, int32 RoundsMax, int32 R
 {
 	_BaseCornerScaleFactor_RoundFired += CurrentReticleParams.ScaleFactor_RoundFired;
 	_BaseShapeCutFactor_RoundFired += CurrentReticleParams.ShapeCutFactor_RoundFired;
+	
 	if (CurrentAmmoCounter_DynMatInst.IsValid())
 	{
 		CurrentAmmoCounter_DynMatInst->SetScalarParameterValue(Ammo::Rounds_Current, RoundsCurrent);

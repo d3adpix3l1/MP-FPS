@@ -1,4 +1,4 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 #pragma once
 
@@ -6,6 +6,8 @@
 #include "Engine/DataAsset.h"
 #include "ShooterTypes/ShooterTypes.h"
 #include "SpecialElimData.generated.h"
+
+class UTexture2D;
 
 USTRUCT(BlueprintType)
 struct FSpecialElimInfo
@@ -32,8 +34,8 @@ UCLASS()
 class FPS_API USpecialElimData : public UDataAsset
 {
 	GENERATED_BODY()
-	
 public:
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|SpecialElims")
 	TMap<ESpecialElimType, FSpecialElimInfo> SpecialElimInfo;
 };

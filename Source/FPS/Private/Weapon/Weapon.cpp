@@ -1,4 +1,4 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 
 #include "Weapon/Weapon.h"
@@ -10,6 +10,7 @@
 #include "Interfaces/PlayerInterface.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Materials/MaterialInstanceDynamic.h"
+
 
 AWeapon::AWeapon()
 {
@@ -30,7 +31,7 @@ AWeapon::AWeapon()
 	Mesh3P->CastShadow = true;
 	Mesh3P->SetupAttachment(Mesh1P);
 	Mesh3P->SetHiddenInGame(true);
-	
+
 	AimFieldOfView = 65.0f;
 	TraceRadius = 5.f;
 	FireTime = 0.1f;
@@ -39,7 +40,7 @@ AWeapon::AWeapon()
 	StartingCarriedAmmo = 10;
 	Sequence = 0;
 	WeaponStatus = EWeaponStatus::Idle;
-	Damage = 15;
+	Damage = 15.f;
 }
 
 USkeletalMeshComponent* AWeapon::GetMesh1P() const
@@ -58,7 +59,6 @@ UMaterialInstanceDynamic* AWeapon::GetReticleDynamicMaterialInstance()
 	{
 		DynMatInst_Reticle = UMaterialInstanceDynamic::Create(ReticleMaterial, this);
 	}
-	
 	return DynMatInst_Reticle;
 }
 
@@ -68,7 +68,6 @@ UMaterialInstanceDynamic* AWeapon::GetAmmoCounterDynamicMaterialInstance()
 	{
 		DynMatInst_AmmoCounter = UMaterialInstanceDynamic::Create(AmmoCounterMaterial, this);
 	}
-	
 	return DynMatInst_AmmoCounter;
 }
 
@@ -95,7 +94,6 @@ void AWeapon::DetachFromOwningPawn()
 	Mesh3P->SetHiddenInGame(true);
 }
 
-
 void AWeapon::WeaponTrace(FHitResult& OutHit, float TraceLength)
 {
 	FCollisionQueryParams QueryParams;
@@ -115,8 +113,8 @@ void AWeapon::WeaponTrace(FHitResult& OutHit, float TraceLength)
 		FVector EyesWorldLocation;
 		FRotator EyesWorldRotation;
 		PC->GetActorEyesViewPoint(EyesWorldLocation, EyesWorldRotation);
-		
 		const FVector EyesWorldDirection = UKismetMathLibrary::GetForwardVector(EyesWorldRotation);
+		
 		const FVector Start = EyesWorldLocation;
 		const FVector End = Start + EyesWorldDirection * TraceLength;
 		
@@ -125,28 +123,15 @@ void AWeapon::WeaponTrace(FHitResult& OutHit, float TraceLength)
 			Start, 
 			End, 
 			FQuat::Identity, 
-			FPSTraceChannels::ECC_Weapon,
+			FPSTraceChannels::ECC_Weapon, 
 			FCollisionShape::MakeSphere(TraceRadius),
 			QueryParams,
-			ResponseParams
-		);
+			ResponseParams);
 		
 		if (!bHit)
 		{
 			OutHit.ImpactPoint = End;
 		}
-		/*DrawDebugSphereTraceSingle(
-			GetWorld(), 
-			Start, 
-			End,
-			TraceRadius, 
-			EDrawDebugTrace::ForDuration,
-			bHit,
-			OutHit,
-			FColor::Green,
-			FColor::Red,
-			5.f
-		);*/
 	}
 }
 
@@ -154,13 +139,14 @@ void AWeapon::Local_Fire(const FVector& ImpactPoint, const FVector& ImpactNormal
 	TEnumAsByte<EPhysicalSurface> ImpactSurfaceType, bool bIsFirstPerson)
 {
 	FireEffects(ImpactPoint, ImpactNormal, ImpactSurfaceType, bIsFirstPerson);
+	
 	if (GetInstigator()->IsLocallyControlled())
 	{
 		Ammo = FMath::Clamp(Ammo - 1, 0, MagCapacity);
-		if (!GetInstigator()->HasAuthority()){
+		if (!GetInstigator()->HasAuthority())
+		{
 			++Sequence;
 		}
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("Sequence: %d"), Sequence));
 	}
 }
 
@@ -185,17 +171,18 @@ void AWeapon::BeginPlay()
 	
 }
 
-void AWeapon::SetMeshVisibilities(const APawn* OwningPawn) const
+void AWeapon::SetMeshVisibilities(APawn* OwningPawn) const
 {
 	if (OwningPawn->IsLocallyControlled())
 	{
 		Mesh1P->SetHiddenInGame(false);
 		Mesh3P->SetHiddenInGame(true);
-	} 
+	}
 	else
 	{
 		Mesh1P->SetHiddenInGame(true);
 		Mesh3P->SetHiddenInGame(false);
 	}
 }
+
 

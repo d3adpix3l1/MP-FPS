@@ -1,19 +1,18 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 
 #include "Elimination/EliminationComponent.h"
-#include "GameFramework/Pawn.h"
-#include "Player/ShooterPlayerState.h"
-#include "ShooterTypes/ShooterTypes.h"
+
 #include "Engine/World.h"
 #include "Game/ShooterGameStateBase.h"
+#include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/ShooterPlayerState.h"
+#include "ShooterTypes/ShooterTypes.h"
 
 
-// Sets default values
 UEliminationComponent::UEliminationComponent()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryComponentTick.bCanEverTick = false;
 	SequentialElimInterval = 2.f;
 	LastElimTime = 0.f;
@@ -22,21 +21,21 @@ UEliminationComponent::UEliminationComponent()
 	ElimsNeededForStreak = 5;
 }
 
-void UEliminationComponent::OnRoundReported(AActor* Attacker, AActor* Victim, bool bHit, bool bHeadshot, bool bLethal)
+void UEliminationComponent::OnRoundReported(AActor* Attacker, AActor* Victim, bool bHit, bool bHeadShot, bool bLethal)
 {
 	AShooterPlayerState* AttackerPS = GetPlayerStateFromActor(Attacker);
 	if (!IsValid(AttackerPS)) return;
 	
 	ProcessHitOrMiss(bHit, AttackerPS);
 	
-	if (!bHit) return; // Early return if we missed
+	if (!bHit) return; // Early return if it was a miss
 	
 	AShooterPlayerState* VictimPS = GetPlayerStateFromActor(Victim);
 	if (!IsValid(VictimPS)) return;
 	
 	if (bLethal)
 	{
-		ProcessElimination(bHeadshot, AttackerPS, VictimPS);
+		ProcessElimination(bHeadShot, AttackerPS, VictimPS);
 	}
 }
 
@@ -48,9 +47,9 @@ void UEliminationComponent::ProcessElimination(bool bHeadShot, AShooterPlayerSta
 	ESpecialElimType SpecialElimType{};
 	
 	ProcessHeadshot(bHeadShot, SpecialElimType, AttackerPS);
-	ProcessSequentialElim(SpecialElimType, AttackerPS);
+	ProcessSequentialEliminations(SpecialElimType, AttackerPS);
 	ProcessStreaks(SpecialElimType, AttackerPS, VictimPS);
-	
+
 	AShooterGameStateBase* GameState = Cast<AShooterGameStateBase>(UGameplayStatics::GetGameState(AttackerPS));
 	if (IsValid(GameState))
 	{
@@ -68,19 +67,20 @@ void UEliminationComponent::ProcessElimination(bool bHeadShot, AShooterPlayerSta
 	}
 }
 
-void UEliminationComponent::ProcessHeadshot(bool bHeadshot, ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS)
+void UEliminationComponent::ProcessHeadshot(bool bHeadShot, ESpecialElimType& OutElimType,
+	AShooterPlayerState* AttackerPS)
 {
-	if (bHeadshot)
+	if (bHeadShot)
 	{
 		OutElimType |= ESpecialElimType::Headshot;
 		AttackerPS->AddHeadShotElim();
 	}
 }
 
-void UEliminationComponent::ProcessSequentialElim(ESpecialElimType OutElimType, AShooterPlayerState* AttackerPS)
+void UEliminationComponent::ProcessSequentialEliminations(ESpecialElimType& OutElimType,
+	AShooterPlayerState* AttackerPS)
 {
 	const float CurrentTime = GetWorld()->GetTimeSeconds();
-	
 	if (CurrentTime - LastElimTime <= SequentialElimInterval)
 	{
 		++SequentialElims;
@@ -89,7 +89,6 @@ void UEliminationComponent::ProcessSequentialElim(ESpecialElimType OutElimType, 
 	{
 		SequentialElims = 1;
 	}
-	
 	LastElimTime = CurrentTime;
 	
 	if (SequentialElims > 1)
@@ -99,23 +98,22 @@ void UEliminationComponent::ProcessSequentialElim(ESpecialElimType OutElimType, 
 	}
 }
 
-void UEliminationComponent::ProcessStreaks(ESpecialElimType OutElimType, AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS)
+void UEliminationComponent::ProcessStreaks(ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS,
+	AShooterPlayerState* VictimPS)
 {
 	++Streak;
-	if (Streak == ElimsNeededForStreak)
+	if (Streak >= ElimsNeededForStreak)
 	{
 		OutElimType |= ESpecialElimType::Streak;
 		AttackerPS->SetOnStreak(true);
 		AttackerPS->UpdateHighestStreak(Streak);
 	}
-	
 	if (VictimPS->IsOnStreak())
 	{
-		OutElimType |= ESpecialElimType::ShowStopper;
+		OutElimType |= ESpecialElimType::Showstopper;
 		AttackerPS->AddShowStopperElim();
 		VictimPS->SetOnStreak(false);
 	}
-	
 	if (AttackerPS->GetLastAttacker() == VictimPS)
 	{
 		OutElimType |= ESpecialElimType::Revenge;
@@ -135,10 +133,10 @@ void UEliminationComponent::HandleFirstBlood(AShooterGameStateBase* GameState, E
 	}
 }
 
-void UEliminationComponent::UpdateLeaderStatus(AShooterGameStateBase* GameState, ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS,
-	AShooterPlayerState* VictimPS)
+void UEliminationComponent::UpdateLeaderStatus(AShooterGameStateBase* GameState, ESpecialElimType& OutElimType,
+	AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS)
 {
-	AShooterPlayerState* LastLeader = GameState->GetSoleLeader();
+	AShooterPlayerState* LastLeader =  GameState->GetSoleLeader();
 	const bool bAttackerWasTiedForTheLead = GameState->IsTiedForTheLead(AttackerPS);
 	GameState->UpdateLeader();
 	if (!bAttackerWasTiedForTheLead && GameState->IsTiedForTheLead(AttackerPS))
@@ -148,7 +146,7 @@ void UEliminationComponent::UpdateLeaderStatus(AShooterGameStateBase* GameState,
 	}
 	if (IsValid(LastLeader) && LastLeader != GameState->GetSoleLeader())
 	{
-		// Last Leader has lost the lead
+		// LastLeader has lost the lead
 		LastLeader->Client_LostTheLead();
 		
 		if (VictimPS == LastLeader)
@@ -158,7 +156,7 @@ void UEliminationComponent::UpdateLeaderStatus(AShooterGameStateBase* GameState,
 		}
 	}
 	
-	if (AttackerPS!= LastLeader && AttackerPS == GameState->GetSoleLeader())
+	if (AttackerPS != LastLeader && AttackerPS == GameState->GetSoleLeader())
 	{
 		OutElimType |= ESpecialElimType::GainedTheLead;
 	}
@@ -174,7 +172,8 @@ void UEliminationComponent::ProcessHitOrMiss(bool bHit, AShooterPlayerState* Att
 	if (bHit)
 	{
 		AttackerPS->AddHit();
-	} else
+	}
+	else
 	{
 		AttackerPS->AddMiss();
 	}
@@ -187,8 +186,8 @@ AShooterPlayerState* UEliminationComponent::GetPlayerStateFromActor(AActor* Acto
 	{
 		return Pawn->GetPlayerState<AShooterPlayerState>();
 	}
-	
 	return nullptr;
 }
+
 
 

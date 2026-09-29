@@ -1,11 +1,11 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Components/ActorComponent.h"
-#include "Data/WeaponData.h"
 #include "GameplayTagContainer.h"
+#include "Components/ActorComponent.h"
+#include "GameFramework/Actor.h"
 #include "CombatComponent.generated.h"
 
 
@@ -15,11 +15,11 @@ class AWeapon;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FReticleChanged, UMaterialInstanceDynamic*, ReticleDynMatInst, const FReticleParams&, ReticleParams, bool, bCurrentlyTargetingPlayer);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FAmmoCounterChanged, UMaterialInstanceDynamic*, AmmoCounterDynMatInst, int32, RoundsCurrent, int32, RoundsMax);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FRoundFired, int32, RoundsCurrent, int32, RoundsMax, int32, RoundsInReserved);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FRoundFired, int32, RoundsCurrent, int32, RoundsMax, int32, RoundsInReserve);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FAimingStatusChanged, bool, bIsAiming);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTargetingPlayerStatusChanged, bool, bTargetingPlayer);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTargetingPlayerStatusChanged, bool, bIsAiming);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FCurrentReserveAmmoChanged, int32, RoundsInReserve, int32, RoundsInWeapon, UMaterialInterface*, WeaponIconMaterial);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FRoundReported, AActor*, Attacker, AActor*, Victim, bool, bHit, bool, bHeadshot, bool, bLethal);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FRoundReported, AActor*, Attacker, AActor*, Victim, bool, bHit, bool, bHeadShot, bool, bLethal);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FPS_API UCombatComponent : public UActorComponent
@@ -30,9 +30,9 @@ public:
 	UCombatComponent();
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
-
+	
 	UFUNCTION(BlueprintPure, Category = "FPS|Combat")
-	static UCombatComponent* FindCombatComponent(const AActor* Actor) { return ( IsValid(Actor) ? Actor->FindComponentByClass<UCombatComponent>() : nullptr); }
+	static UCombatComponent* FindCombatComponent(const AActor* Actor) { return ( IsValid(Actor) ? Actor->FindComponentByClass<UCombatComponent>() : nullptr ); }
 	
 	// Cycle to the next weapon in the inventory
 	void Initiate_CycleWeapon();
@@ -90,9 +90,11 @@ public:
 	
 	UPROPERTY(ReplicatedUsing = OnRep_CurrentReserveAmmo)
 	int32 CurrentReserveAmmo;
-	
+
 	bool bHitPlayer;
+
 protected:
+	
 	UPROPERTY(EditDefaultsOnly, Category = "FPS|Weapon")
 	float TraceLength;
 	
@@ -100,7 +102,6 @@ protected:
 	void BlendOut_CycleWeapon(UAnimMontage* Montage, bool bInterrupted);
 private:
 	TMap<FGameplayTag, int32> ReserveAmmo;
-	
 	bool bHitPlayerLastFrame;
 	bool bTriggerPressed;
 	FTimerHandle FireTimer;
@@ -111,10 +112,9 @@ private:
 	
 	void SetCurrentWeapon(AWeapon* NewWeapon, AWeapon* LastWeapon);
 	
-	
 	UPROPERTY(Transient, Replicated)
 	TArray<AWeapon*> Inventory;
-
+	
 	UPROPERTY(EditDefaultsOnly, Category = "FPS|Weapon")
 	TArray<TSubclassOf<AWeapon>> DefaultWeaponClasses;
 	

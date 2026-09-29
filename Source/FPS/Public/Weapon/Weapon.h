@@ -1,4 +1,4 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 #pragma once
 
@@ -15,17 +15,17 @@ UENUM(BlueprintType)
 enum class EFireType : uint8
 {
 	Auto UMETA(DisplayName = "Automatic"),
-	SemiAuto UMETA(DisplayName = "Semi-Automatic")
+	SemiAuto UMETA(DisplayName = "SemiAutomatic")
 };
 
 UENUM(BlueprintType)
 enum class EWeaponStatus : uint8
 {
-	Idle, // Weapon doing nothing, can fire/reload/cycle
-	Firing, // Weapon is firing, can't reload/cycle
-	Reloading, // Currently reloading, can't fire or cycle
-	Cycling, // Currently cycling, can't fire or reload
-	Unequipped // Weapon is on our person but can't fire or reload
+	Idle,		// Weapon doing nothing, can fire/reload/cycle
+	Firing,		// Currently firing, can't reload/cycle
+	Reloading,	// Currently reloading, can't fire/cycle
+	Cycling,	// Currently cycling to the next weapon, can't fire/reload/cycle
+	Unequipped	// On our person, but can't do anything
 };
 
 UCLASS()
@@ -51,7 +51,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Aiming")
 	float AimFieldOfView;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Aiming")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Trace")
 	float TraceRadius;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FPS|FireType")
@@ -83,24 +83,23 @@ public:
 	int32 StartingCarriedAmmo;
 	
 	EWeaponStatus WeaponStatus;
-
 protected:
 	virtual void BeginPlay() override;
-	
+
 	UFUNCTION(BlueprintImplementableEvent)
 	void FireEffects(const FVector& ImpactPoint, const FVector& ImpactNormal, EPhysicalSurface ImpactSurfaceType, bool bIsFirstPerson);
 
-	//Weapon Mesh 1P View
+	// Weapon Mesh: 1st person view
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FPS|Weapon")
 	TObjectPtr<USkeletalMeshComponent> Mesh1P;
 	
-	//Weapon Mesh 3P View
+	// Weapon Mesh: 3rd person view
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FPS|Weapon")
 	TObjectPtr<USkeletalMeshComponent> Mesh3P;
 	
 private:
 	
-	void SetMeshVisibilities(const APawn* OwningPawn) const;
+	void SetMeshVisibilities(APawn* OwningPawn) const;
 	
 	int32 Sequence;
 	

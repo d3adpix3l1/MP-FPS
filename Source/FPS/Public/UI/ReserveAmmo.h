@@ -1,4 +1,4 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 #pragma once
 
@@ -7,12 +7,9 @@
 #include "ReserveAmmo.generated.h"
 
 class AWeapon;
-class UImage;
 class UTextBlock;
+class UImage;
 
-/**
- * 
- */
 UCLASS()
 class FPS_API UReserveAmmo : public UUserWidget
 {
@@ -40,5 +37,4 @@ private:
 	
 	UFUNCTION()
 	void OnWeaponFirstReplicated(AWeapon* Weapon, bool bTargetingPlayer);
-	
 };

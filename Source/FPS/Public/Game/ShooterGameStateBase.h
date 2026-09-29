@@ -1,4 +1,4 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 #pragma once
 
@@ -6,15 +6,13 @@
 #include "GameFramework/GameStateBase.h"
 #include "ShooterGameStateBase.generated.h"
 
+
 class AShooterPlayerState;
-/**
- * 
- */
+
 UCLASS()
 class FPS_API AShooterGameStateBase : public AGameStateBase
 {
 	GENERATED_BODY()
-	
 public:
 	AShooterGameStateBase();
 	
@@ -23,6 +21,7 @@ public:
 	AShooterPlayerState* GetSoleLeader() const;
 	bool IsTiedForTheLead(AShooterPlayerState* PlayerState);
 private:
+	
 	bool bHasFirstBloodBeenHad;
 	
 	UPROPERTY()

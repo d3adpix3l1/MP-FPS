@@ -1,20 +1,19 @@
-// Copyright Perfect Pixel Games
+// Copyright Druid Mechanics
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Combat/CombatComponent.h"
-#include "Elimination/EliminationComponent.h"
 #include "GameFramework/Character.h"
 #include "Interfaces/PlayerInterface.h"
 #include "ShooterTypes/ShooterTypes.h"
 #include "ShooterCharacter.generated.h"
 
-
+class UEliminationComponent;
 class UHealthComponent;
-class UInputAction;
+class UCombatComponent;
 class UCameraComponent;
 class USpringArmComponent;
+class UInputAction;
 class AWeapon;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FWeaponFirstReplicated, AWeapon*, Weapon, bool, bTargetingPlayer);
@@ -25,7 +24,6 @@ class FPS_API AShooterCharacter : public ACharacter, public IPlayerInterface
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	AShooterCharacter();
 	
 	virtual void Tick(float DeltaTime) override;
@@ -44,8 +42,8 @@ public:
 	virtual void Notify_ReloadWeapon_Implementation() override;
 	virtual void AddAmmo_Implementation(const FGameplayTag& WeaponType, int32 AmmoAmount) override;
 	virtual bool DoDamage_Implementation(float DamageAmount, AActor* DamageInstigator) override;
-	/** ~PlayerInterface~ */
-
+	/** ~PlayerInterface */
+	
 	virtual void BeginPlay() override;
 	virtual void BeginDestroy() override;
 	
@@ -66,9 +64,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "FPS|HitReact")
 	TArray<TObjectPtr<UAnimMontage>> HitReacts;
 	
+	UPROPERTY(EditDefaultsOnly, Category = "FPS|Respawn")
+	float RespawnTime;
 protected:
 	
-	//1st person view (arms)
+	// 1st person view (arms)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "FPS|Mesh")
 	TObjectPtr<USkeletalMeshComponent> Mesh1P;
 	
@@ -99,7 +99,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, Category = "FPS|TurnInPlace")
 	ETurningInPlace TurningStatus;
 	
-	UFUNCTION(NetMulticast, Unreliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_HitReact(int32 MontageIndex);
 	
 	UFUNCTION()
@@ -108,18 +108,12 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent)
 	void DeathEffects();
 	
-	UPROPERTY(EditDefaultsOnly, Category = "FPS|Respawn")
-	float RespawnTime;
-	
 private:
 	
 	void Input_CycleWeapon();
-	
 	void Input_ReloadWeapon();
-	
 	void Input_FireWeapon_Pressed();
 	void Input_FireWeapon_Released();
-	
 	void Input_Aim_Pressed();
 	void Input_Aim_Released();
 	
@@ -142,7 +136,7 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = "FPS|Input")
 	TObjectPtr<UInputAction> FireWeaponAction;
-
+	
 	UPROPERTY(EditAnywhere, Category = "FPS|Input")
 	TObjectPtr<UInputAction> ReloadWeaponAction;
 	

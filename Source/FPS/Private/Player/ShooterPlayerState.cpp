@@ -1,10 +1,10 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 
 #include "Player/ShooterPlayerState.h"
 
-#include "Data/SpecialElimData.h"
 #include "TimerManager.h"
+#include "Data/SpecialElimData.h"
 #include "UI/Elims/SpecialElim.h"
 
 AShooterPlayerState::AShooterPlayerState()
@@ -140,7 +140,7 @@ TArray<ESpecialElimType> AShooterPlayerState::DecodeElimBitmask(ESpecialElimType
 	
 	uint16 BitmaskValue = static_cast<uint16>(ElimTypeBitmask);
 	
-	for (uint16 i = 0; i < 16; ++i)
+	for (uint16 i = 0; i < 16; i++)
 	{
 		if (BitmaskValue & (1 << i))
 		{
@@ -157,7 +157,8 @@ void AShooterPlayerState::Client_ScoredElim_Implementation(int32 ElimScore)
 	OnScoreChanged.Broadcast(ElimScore);
 }
 
-void AShooterPlayerState::Client_SpecialElim_Implementation(const ESpecialElimType& SpecialElim, int32 SequentialElimCount, int32 StreakCount, int32 ElimScore)
+void AShooterPlayerState::Client_SpecialElim_Implementation(const ESpecialElimType& SpecialElim,
+	int32 SequentialElimCount, int32 StreakCount, int32 ElimScore)
 {
 	ensure(IsValid(SpecialElimData));
 	
@@ -176,8 +177,7 @@ void AShooterPlayerState::Client_SpecialElim_Implementation(const ESpecialElimTy
 			ElimMessageInfo.StreakCount = StreakCount;
 		}
 		ElimMessageInfo.ElimType = ElimType;
-		
-		// FIFO Data Structure Queue
+		// FIFO - First-in, First-out - Queue
 		SpecialElimQueue.Enqueue(ElimMessageInfo);
 	}
 	if (!bIsProcessingQueue)
@@ -211,10 +211,10 @@ void AShooterPlayerState::ShowSpecialElim(const FSpecialElimInfo& ElimMessageInf
 	FString ElimMessageString = ElimMessageInfo.ElimMessage;
 	if (ElimMessageInfo.ElimType == ESpecialElimType::Sequential)
 	{
-		if (ElimMessageInfo.SequentialElimCount == 2) ElimMessageString = FString("Double Kill!");
-		else if (ElimMessageInfo.SequentialElimCount == 3) ElimMessageString = FString("Triple Kill!");
-		else if (ElimMessageInfo.SequentialElimCount == 4) ElimMessageString = FString("Quad Kill!");
-		else if (ElimMessageInfo.SequentialElimCount > 4) ElimMessageString = FString::Printf(TEXT("Multi-Kill! x%d!"), ElimMessageInfo.SequentialElimCount);
+		if (ElimMessageInfo.SequentialElimCount == 2) ElimMessageString = FString("Double Elim!");
+		else if (ElimMessageInfo.SequentialElimCount == 3) ElimMessageString = FString("Triple Elim!");
+		else if (ElimMessageInfo.SequentialElimCount == 4) ElimMessageString = FString("Quad Elim!");
+		else if (ElimMessageInfo.SequentialElimCount > 4) ElimMessageString = FString::Printf(TEXT("Rampage x%d!"), ElimMessageInfo.SequentialElimCount);
 	}
 	if (ElimMessageInfo.ElimType == ESpecialElimType::Streak) ElimMessageString = FString::Printf(TEXT("Streak x%d!"), ElimMessageInfo.StreakCount);
 	

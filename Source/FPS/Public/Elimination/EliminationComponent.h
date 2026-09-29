@@ -1,12 +1,13 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Game/ShooterGameStateBase.h"
-#include "GameFramework/Actor.h"
+#include "Components/ActorComponent.h"
 #include "EliminationComponent.generated.h"
 
+
+class AShooterGameStateBase;
 enum class ESpecialElimType : uint16;
 class AShooterPlayerState;
 
@@ -19,27 +20,25 @@ public:
 	UEliminationComponent();
 	
 	UFUNCTION()
-	void OnRoundReported(AActor* Attacker, AActor* Victim, bool bHit, bool bHeadshot, bool bLethal);
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Elimination")
+	void OnRoundReported(AActor* Attacker, AActor* Victim, bool bHit, bool bHeadShot, bool bLethal);
+
+	UPROPERTY(EditDefaultsOnly, Category = "FPS|Elimination")
 	float SequentialElimInterval;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|Elimination")
+	UPROPERTY(EditDefaultsOnly, Category = "FPS|Elimination")
 	int32 ElimsNeededForStreak;
-	
 private:
 	
 	float LastElimTime;
 	int32 SequentialElims;
 	int32 Streak;
 	
-	AShooterPlayerState* GetPlayerStateFromActor(AActor* Actor); 
-	
+	AShooterPlayerState* GetPlayerStateFromActor(AActor* Actor);
 	void ProcessHitOrMiss(bool bHit, AShooterPlayerState* AttackerPS);
-	void ProcessElimination(bool bHeadshot, AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS);
-	void ProcessHeadshot(bool bHeadshot, ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS);
-	void ProcessSequentialElim(ESpecialElimType OutElimType, AShooterPlayerState* AttackerPS);
-	void ProcessStreaks(ESpecialElimType OutElimType, AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS);
+	void ProcessElimination(bool bHeadShot, AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS);
+	void ProcessHeadshot(bool bHeadShot, ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS);
+	void ProcessSequentialEliminations(ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS);
+	void ProcessStreaks(ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS);
 	void HandleFirstBlood(AShooterGameStateBase* GameState, ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS);
 	void UpdateLeaderStatus(AShooterGameStateBase* GameState, ESpecialElimType& OutElimType, AShooterPlayerState* AttackerPS, AShooterPlayerState* VictimPS);
 	bool HasSpecialElimTypes(const ESpecialElimType& SpecialElimType) const;

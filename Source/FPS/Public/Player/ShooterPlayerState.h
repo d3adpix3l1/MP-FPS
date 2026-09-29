@@ -1,4 +1,4 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 #pragma once
 
@@ -57,7 +57,7 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, Category = "FPS|SpecialElims")
 	TSubclassOf<USpecialElim> SpecialElimWidgetClass;
-	
+
 	UPROPERTY(EditDefaultsOnly, Category = "FPS|SpecialElims")
 	float ElimDisplayTime;
 	
@@ -77,9 +77,10 @@ private:
 	bool bWinner;
 	
 	TWeakObjectPtr<APlayerState> LastAttacker;
+	
+	TArray<ESpecialElimType> DecodeElimBitmask(ESpecialElimType ElimTypeBitmask);
 	void ProcessNextSpecialElim();
 	void ShowSpecialElim(const FSpecialElimInfo& ElimMessageInfo);
-	TArray<ESpecialElimType> DecodeElimBitmask(ESpecialElimType ElimTypeBitmask);
 	TQueue<FSpecialElimInfo> SpecialElimQueue;
 	bool bIsProcessingQueue;
 };

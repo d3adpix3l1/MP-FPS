@@ -1,4 +1,4 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 #pragma once
 
@@ -7,6 +7,8 @@
 #include "Engine/DataAsset.h"
 #include "WeaponData.generated.h"
 
+class UAnimMontage;
+class UBlendSpace;
 class UAnimSequence;
 
 USTRUCT(BlueprintType)
@@ -24,19 +26,19 @@ struct FPlayerAnims
 	TObjectPtr<UAnimSequence> CrouchIdleAnim = nullptr;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UAnimSequence> SprintAnim = nullptr;
+    TObjectPtr<UAnimSequence> SprintAnim = nullptr;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UBlendSpace> AimOffset_Hip = nullptr;
+	TObjectPtr<UBlendSpace> AimOffset_Hip;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UBlendSpace> AimOffset_Aim = nullptr;
+	TObjectPtr<UBlendSpace> AimOffset_Aim;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UBlendSpace> Strafe_Standing = nullptr;
+	TObjectPtr<UBlendSpace> Strafe_Standing;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<UBlendSpace> Strafe_Crouching = nullptr;
+	TObjectPtr<UBlendSpace> Strafe_Crouching;
 };
 
 USTRUCT(BlueprintType)
@@ -59,6 +61,7 @@ class FPS_API UWeaponData : public UDataAsset
 {
 	GENERATED_BODY()
 public:
+	
 	UPROPERTY(EditDefaultsOnly, Category = "FPS|WeaponData|Weapons")
 	TMap<FGameplayTag, FName> GripPoints;
 	
@@ -68,12 +71,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|WeaponData|FirstPerson")
 	TMap<FGameplayTag, FPlayerAnims> FirstPersonAnims;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|WeaponData|ThirdPerson")
+	TMap<FGameplayTag, FPlayerAnims> ThirdPersonAnims;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|WeaponData|FirstPerson")
 	TMap<FGameplayTag, FMontageData> FirstPersonMontages;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|WeaponData|ThirdPerson")
-	TMap<FGameplayTag, FPlayerAnims> ThirdPersonAnims;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|WeaponData|ThirdPerson")
 	TMap<FGameplayTag, FMontageData> ThirdPersonMontages;
+	
 };

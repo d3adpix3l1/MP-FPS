@@ -6,19 +6,16 @@
 #include "GameFramework/PlayerController.h"
 #include "ShooterPlayerController.generated.h"
 
-struct FInputActionValue;
 class UInputAction;
 class UInputMappingContext;
-/**
- * 
- */
+struct FInputActionValue;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerStateReplicated);
 
 UCLASS()
 class FPS_API AShooterPlayerController : public APlayerController
 {
 	GENERATED_BODY()
-	
 public:
 	AShooterPlayerController();
 	
@@ -28,12 +25,12 @@ public:
 	virtual void OnRep_PlayerState() override;
 	
 	bool bPawnAlive;
-	
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
-	
+	virtual void OnPossess(APawn* InPawn) override;
 private:
+	
 	UPROPERTY(EditAnywhere, Category = "FPS|Input")
 	TObjectPtr<UInputMappingContext> ShooterIMC;
 	

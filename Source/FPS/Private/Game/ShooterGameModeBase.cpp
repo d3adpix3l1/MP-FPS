@@ -1,4 +1,4 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 
 #include "Game/ShooterGameModeBase.h"
@@ -17,7 +17,7 @@ void AShooterGameModeBase::RequestRespawn(ACharacter* Character, AController* Co
 	TArray<AActor*> PlayerStarts;
 	UGameplayStatics::GetAllActorsOfClass(this, APlayerStart::StaticClass(), PlayerStarts);
 	ensure(PlayerStarts.Num() > 0);
-	int32 Selection = FMath::RandRange(0, PlayerStarts.Num() -1);
+	int32 Selection = FMath::RandRange(0, PlayerStarts.Num() - 1);
 	
 	RestartPlayerAtPlayerStart(Controller, PlayerStarts[Selection]);
 }

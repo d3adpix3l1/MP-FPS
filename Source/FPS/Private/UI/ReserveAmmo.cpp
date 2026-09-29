@@ -1,15 +1,14 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 
 #include "UI/ReserveAmmo.h"
 
 #include "Character/ShooterCharacter.h"
+#include "Combat/CombatComponent.h"
 #include "Components/Image.h"
 #include "Components/TextBlock.h"
-#include "Combat/CombatComponent.h"
+#include "Materials/MaterialInterface.h"
 #include "Weapon/Weapon.h"
-
-class AShooterCharacter;
 
 void UReserveAmmo::NativeOnInitialized()
 {
@@ -23,12 +22,12 @@ void UReserveAmmo::NativeOnInitialized()
 	AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(GetOwningPlayer()->GetPawn());
 	if (!IsValid(ShooterCharacter)) return;
 	OnPossessedPawnChanged(nullptr, ShooterCharacter);
+	
 	if (ShooterCharacter->HasWeaponFirstReplicated())
 	{
 		AWeapon* Weapon = IPlayerInterface::Execute_GetCurrentWeapon(ShooterCharacter);
 		if (IsValid(Weapon))
 		{
-			// Reserve Ammo Amount for the current weapon, currentWeapon->Ammo.
 			OnCurrentReserveAmmoChanged(IPlayerInterface::Execute_GetReserveAmmo(ShooterCharacter), Weapon->Ammo, Weapon->WeaponIcon);
 		}
 	}
@@ -52,7 +51,6 @@ void UReserveAmmo::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
 		OldPawnCombat->OnCurrentReserveAmmoChanged.RemoveDynamic(this, &ThisClass::OnCurrentReserveAmmoChanged);
 		OldPawnCombat->OnRoundFired.RemoveDynamic(this, &ThisClass::OnRoundFired);
 	}
-	
 	UCombatComponent* NewPawnCombat = UCombatComponent::FindCombatComponent(NewPawn);
 	if (IsValid(NewPawnCombat))
 	{
@@ -95,5 +93,6 @@ void UReserveAmmo::OnWeaponFirstReplicated(AWeapon* Weapon, bool bTargetingPlaye
 {
 	AShooterCharacter* ShooterCharacter = Cast<AShooterCharacter>(GetOwningPlayer()->GetPawn());
 	if (!IsValid(ShooterCharacter)) return;
+	
 	OnCurrentReserveAmmoChanged(IPlayerInterface::Execute_GetReserveAmmo(ShooterCharacter), Weapon->Ammo, Weapon->WeaponIcon);
 }

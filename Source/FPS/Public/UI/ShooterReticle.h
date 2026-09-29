@@ -1,15 +1,14 @@
-﻿// Copyright Perfect Pixel Games
+﻿// Copyright Druid Mechanics
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Weapon/Weapon.h"
 #include "ShooterTypes/ShooterTypes.h"
 #include "ShooterReticle.generated.h"
 
-class UImage;
 class AWeapon;
+class UImage;
 
 UCLASS()
 class FPS_API UShooterReticle : public UUserWidget
@@ -19,13 +18,14 @@ public:
 	virtual void NativeOnInitialized() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	
-	UPROPERTY(meta = (Bindwidget))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Image_Reticle;
 	
-	UPROPERTY(meta = (Bindwidget))
+	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UImage> Image_AmmoCounter;
 	
 private:
+	
 	TWeakObjectPtr<UMaterialInstanceDynamic> CurrentReticle_DynMatInst;
 	TWeakObjectPtr<UMaterialInstanceDynamic> CurrentAmmoCounter_DynMatInst;
 	FReticleParams CurrentReticleParams;
@@ -36,7 +36,6 @@ private:
 	float _BaseCornerScaleFactor_Aiming;
 	float _BaseShapeCutFactor_Aiming;
 	float _BaseCornerScaleFactor_TargetingPlayer;
-	
 	bool bAiming;
 	bool bTargetingPlayer;
 	
@@ -47,10 +46,10 @@ private:
 	void OnWeaponFirstReplicated(AWeapon* Weapon, bool bIsTargetingPlayer);
 	
 	UFUNCTION()
-	void OnReticleChanged(UMaterialInstanceDynamic* Reticle_DynMatInst, const FReticleParams& ReticleParams, bool bCurrentlyTargetingPlayer);
+	void OnReticleChanged(UMaterialInstanceDynamic* ReticleDynMatInst, const FReticleParams& ReticleParams, bool bCurrentlyTargetingPlayer);
 	
 	UFUNCTION()
-	void OnAmmoCounterChanged(UMaterialInstanceDynamic* AmmoCounter_DynMatInst, int32 RoundsCurrent, int32 RoundsMax);
+	void OnAmmoCounterChanged(UMaterialInstanceDynamic* AmmoCounterDynMatInst, int32 RoundsCurrent, int32 RoundsMax);
 	
 	UFUNCTION()
 	void OnRoundFired(int32 RoundsCurrent, int32 RoundsMax, int32 RoundsInReserve);
@@ -60,6 +59,4 @@ private:
 	
 	UFUNCTION()
 	void OnTargetingPlayerStatusChanged(bool bTargeting);
-	
-	
 };
