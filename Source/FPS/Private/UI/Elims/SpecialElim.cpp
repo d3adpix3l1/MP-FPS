@@ -24,8 +24,8 @@ void USpecialElim::CenterWidget(UUserWidget* Widget, float VerticalRatio)
 	if (!IsValid(Widget)) return;
 	
 	FVector2D ViewportSize = UWidgetLayoutLibrary::GetViewportSize(Widget);
-	const float VerticalFraction = VerticalRatio == 0.f ? 1.f : VerticalRatio * 2;
+	const float VerticalFraction = VerticalRatio == 0.f ? 1.f : VerticalRatio * 2.f;
 	FVector2D CenterPosition(ViewportSize.X / 2.f, VerticalFraction * ViewportSize.Y / 2.f);
-	Widget->SetAlignmentInViewport(FVector2D(0.5f, 0.5f)); // Align the widget center to the center of the viewport
+	Widget->SetAlignmentInViewport(FVector2D(0.5f, 0.5f)); // Align widget center to the center of the viewport
 	Widget->SetPositionInViewport(CenterPosition, true);
 }

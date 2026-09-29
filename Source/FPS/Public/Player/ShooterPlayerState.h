@@ -3,10 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Data/SpecialElimData.h"
 #include "GameFramework/PlayerState.h"
 #include "ShooterPlayerState.generated.h"
 
 
+class USpecialElim;
 class USpecialElimData;
 enum class ESpecialElimType : uint16;
 
@@ -33,7 +35,6 @@ public:
 	void SetLastAttacker(APlayerState* Attacker);
 	
 	bool IsOnStreak() const;
-	
 	APlayerState* GetLastAttacker() const;
 	int32 GetScoredElims() const;
 	
@@ -46,20 +47,20 @@ public:
 	UFUNCTION(Client, Reliable)
 	void Client_SpecialElim(const ESpecialElimType& SpecialElim, int32 SequentialElimCount, int32 StreakCount, int32 ElimScore);
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|SpecialElim")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "FPS|SpecialElims")
 	TObjectPtr<USpecialElimData> SpecialElimData;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "FPS|SpecialElims")
+	TSubclassOf<USpecialElim> SpecialElimWidgetClass;
 	
 private:
 	int32 ScoredElims;
 	int32 Defeats;
 	int32 Hits;
 	int32 Misses;
-	
-	bool bOnStreak; // How many elims you have before you respawned
-	
+	bool bOnStreak; // How many elims do we have since we've spawned?
 	int32 HeadShotElims;
-	
-	TMap<int32, int32> SequentialElims; //Sequential Elims - double, triple, quad kills, multiple elims within a short period of time
+	TMap<int32, int32> SequentialElims; // Sequential elims - multiple elims within a short period of time
 	int32 HighestStreak;
 	int32 RevengeElims;
 	int32 DethroneElims;
@@ -68,4 +69,6 @@ private:
 	bool bWinner;
 	
 	TWeakObjectPtr<APlayerState> LastAttacker;
+	
+	TArray<ESpecialElimType> DecodeElimBitmask(ESpecialElimType ElimTypeBitmask);
 };

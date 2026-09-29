@@ -3,23 +3,26 @@
 
 #include "Player/ShooterPlayerState.h"
 
+#include "Data/SpecialElimData.h"
+#include "TimerManager.h"
+#include "UI/Elims/SpecialElim.h"
+
 AShooterPlayerState::AShooterPlayerState()
 {
 	SetNetUpdateFrequency(100.f);
 	
-	ScoredElims = 0.f;
-	Defeats = 0.f;
-	Hits = 0.f;
-	Misses = 0.f;
+	ScoredElims = 0;
+	Defeats = 0;
+	Hits = 0;
+	Misses = 0;
 	bOnStreak = false;
-	HeadShotElims = 0.f;
-	HighestStreak = 0.f;
-	RevengeElims = 0.f;
-	DethroneElims = 0.f;
-	ShowStopperElims = 0.f;
+	HeadShotElims = 0;
+	HighestStreak = 0;
+	RevengeElims = 0;
+	DethroneElims = 0;
+	ShowStopperElims = 0;
 	bFirstBlood = false;
 	bWinner = false;
-	
 }
 
 void AShooterPlayerState::AddScoredElim()
@@ -58,15 +61,15 @@ void AShooterPlayerState::AddSequentialElim(int32 SequenceCount)
 		SequentialElims.Add(SequenceCount, 1);
 	}
 	/* Reduce the count for all lower sequence counts
-	 * this is because a triple elim means a double was scored first.
-	 * but we want tho count this as just a triple
-	 * i.e. elim 1, elim 2, elim 3, is a triple elim, not a double and a triple elim
+	 * this is because a triple elim means a double was
+	 * scored first. But we want to count this as just a triple,
+	 * i.e. elim 1, elim 2, elim 3 = just a triple, not a double and a triple
 	 */
 	for (auto& Elem : SequentialElims)
 	{
 		if (Elem.Key < SequenceCount && Elem.Value > 0)
 		{
-			++Elem.Value;
+			Elem.Value--;
 		}
 	}
 }
@@ -129,17 +132,47 @@ int32 AShooterPlayerState::GetScoredElims() const
 	return ScoredElims;
 }
 
+TArray<ESpecialElimType> AShooterPlayerState::DecodeElimBitmask(ESpecialElimType ElimTypeBitmask)
+{
+	TArray<ESpecialElimType> ValidElims;
+	
+	uint16 BitmaskValue = static_cast<uint16>(ElimTypeBitmask);
+	
+	for (uint16 i = 0; i < 16; ++i)
+	{
+		if (BitmaskValue & (1 << i))
+		{
+			ESpecialElimType EnumValue = static_cast<ESpecialElimType>(1 << i);
+			ValidElims.Add(EnumValue);
+		}
+	}
+	
+	return ValidElims;
+}
+
 void AShooterPlayerState::Client_ScoredElim_Implementation(int32 ElimScore)
 {
-	//
+	
 }
 
 void AShooterPlayerState::Client_SpecialElim_Implementation(const ESpecialElimType& SpecialElim, int32 SequentialElimCount, int32 StreakCount, int32 ElimScore)
 {
-	//
+	
 }
 
 void AShooterPlayerState::Client_LostTheLead_Implementation()
 {
-	//TODO: show to client with widgets in the hud
+	ensure(IsValid(SpecialElimData));
+	FSpecialElimInfo& ElimMessageInfo = SpecialElimData->SpecialElimInfo.FindChecked(ESpecialElimType::LostTheLead);
+	
+	if (IsValid(SpecialElimWidgetClass))
+	{
+		USpecialElim* ElimWidget = CreateWidget<USpecialElim>(GetPlayerController(), SpecialElimWidgetClass);
+		if (IsValid(ElimWidget))
+		{
+			ElimWidget->InitializeWidget(ElimMessageInfo.ElimMessage, ElimMessageInfo.ElimIcon);
+			ElimWidget->AddToViewport();
+			
+		}
+	}
 }
