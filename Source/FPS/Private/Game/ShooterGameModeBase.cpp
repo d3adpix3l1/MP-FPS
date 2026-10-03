@@ -13,8 +13,6 @@ void AShooterGameModeBase::RequestRespawn(ACharacter* Character, AController* Co
 	if (!IsValid(Character) || !IsValid(Controller)) return;
 	
 	Controller->UnPossess();
-	
-	Character->Reset();
 	Character->Destroy();
 	
 	TArray<AActor*> PlayerStarts;
