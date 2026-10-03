@@ -6,10 +6,13 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
+#include "Player/ShooterPlayerController.h"
 
 void AShooterGameModeBase::RequestRespawn(ACharacter* Character, AController* Controller)
 {
 	if (!IsValid(Character) || !IsValid(Controller)) return;
+	
+	Controller->UnPossess();
 	
 	Character->Reset();
 	Character->Destroy();
