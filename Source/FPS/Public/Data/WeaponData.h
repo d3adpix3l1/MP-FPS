@@ -56,7 +56,7 @@ struct FMontageData
 	TObjectPtr<UAnimMontage> FireMontage = nullptr;
 };
 
-UCLASS()
+UCLASS(BlueprintType, Blueprintable)
 class FPS_API UWeaponData : public UDataAsset
 {
 	GENERATED_BODY()

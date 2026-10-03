@@ -21,7 +21,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FTargetingPlayerStatusChanged, bool,
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FCurrentReserveAmmoChanged, int32, RoundsInReserve, int32, RoundsInWeapon, UMaterialInterface*, WeaponIconMaterial);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FRoundReported, AActor*, Attacker, AActor*, Victim, bool, bHit, bool, bHeadShot, bool, bLethal);
 
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
+UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), BlueprintType, Blueprintable)
 class FPS_API UCombatComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -100,6 +100,10 @@ protected:
 	
 	UFUNCTION()
 	void BlendOut_CycleWeapon(UAnimMontage* Montage, bool bInterrupted);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "FPS|Weapon")
+	TArray<TSubclassOf<AWeapon>> DefaultWeaponClasses;
+	
 private:
 	TMap<FGameplayTag, int32> ReserveAmmo;
 	bool bHitPlayerLastFrame;
@@ -114,9 +118,6 @@ private:
 	
 	UPROPERTY(Transient, Replicated)
 	TArray<AWeapon*> Inventory;
-	
-	UPROPERTY(EditDefaultsOnly, Category = "FPS|Weapon")
-	TArray<TSubclassOf<AWeapon>> DefaultWeaponClasses;
 	
 	AWeapon* SpawnWeapon(TSubclassOf<AWeapon> WeaponClass) const;
 	
