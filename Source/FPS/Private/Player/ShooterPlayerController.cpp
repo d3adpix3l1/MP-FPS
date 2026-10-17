@@ -41,6 +41,9 @@ void AShooterPlayerController::SetupInputComponent()
 	ShooterInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 	ShooterInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ThisClass::Input_Jump);
 	ShooterInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ThisClass::Input_Crouch);
+	ShooterInputComponent->BindAction(Ability1, ETriggerEvent::Started, this, &ThisClass::Input_Ability1);
+	ShooterInputComponent->BindAction(Ability2, ETriggerEvent::Started, this, &ThisClass::Input_Ability2);
+	ShooterInputComponent->BindAction(AbilityUlt, ETriggerEvent::Started, this, &ThisClass::Input_AbilityUlt);
 }
 
 void AShooterPlayerController::OnPossess(APawn* InPawn)
@@ -103,4 +106,20 @@ void AShooterPlayerController::Input_Look(const FInputActionValue& InputActionVa
 	const FVector2D InputAxisVector = InputActionValue.Get<FVector2D>();
 	AddYawInput(InputAxisVector.X);
 	AddPitchInput(InputAxisVector.Y);
+}
+
+void AShooterPlayerController::Input_AltFire()
+{
+}
+
+void AShooterPlayerController::Input_Ability1()
+{
+}
+
+void AShooterPlayerController::Input_Ability2()
+{
+}
+
+void AShooterPlayerController::Input_AbilityUlt()
+{
 }
