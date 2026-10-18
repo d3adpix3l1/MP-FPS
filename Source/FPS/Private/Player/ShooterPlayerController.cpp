@@ -108,18 +108,17 @@ void AShooterPlayerController::Input_Look(const FInputActionValue& InputActionVa
 	AddPitchInput(InputAxisVector.Y);
 }
 
-void AShooterPlayerController::Input_AltFire()
-{
-}
-
 void AShooterPlayerController::Input_Ability1()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Ability 1");
 }
 
 void AShooterPlayerController::Input_Ability2()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Ability 2");
 }
 
 void AShooterPlayerController::Input_AbilityUlt()
 {
+	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, "Ultimate Ability");
 }

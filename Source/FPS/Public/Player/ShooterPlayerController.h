@@ -47,9 +47,6 @@ private:
 	TObjectPtr<UInputAction> JumpAction;
 	
 	UPROPERTY(EditAnywhere, Category = "FPS|Input")
-	TObjectPtr<UInputAction> AltFire;
-	
-	UPROPERTY(EditAnywhere, Category = "FPS|Input")
 	TObjectPtr<UInputAction> Ability1;
 	
 	UPROPERTY(EditAnywhere, Category = "FPS|Input")
@@ -62,7 +59,6 @@ private:
 	void Input_Jump();
 	void Input_Move(const FInputActionValue& InputActionValue);
 	void Input_Look(const FInputActionValue& InputActionValue);
-	void Input_AltFire();
 	void Input_Ability1();
 	void Input_Ability2();
 	void Input_AbilityUlt();
